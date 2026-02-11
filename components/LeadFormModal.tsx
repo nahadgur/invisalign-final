@@ -88,7 +88,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
                 </div>
                 <h2 className="text-3xl font-black text-slate-900 leading-tight">Start Your Smile Journey</h2>
                 <p className="text-slate-500 mt-2 font-medium">
-                  Complete the form to find your elite specialist and secure your <span className="text-sky-600 font-bold">$500 network credit.</span>
+                  Complete the form to get matched with vetted Invisalign specialists in your area.
                 </p>
               </div>
 
