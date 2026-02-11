@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, User, ArrowLeft, Share2, ChevronUp } from '@/components/Icons';
+import { Clock, User, ArrowLeft, Share2, ChevronUp } from '../../components/Icons';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import LeadFormModal from '@/components/LeadFormModal';
