@@ -384,7 +384,7 @@ export default function Home() {
             Get Matched with a Specialist
           </button>
           <p className="text-sm text-slate-500 font-medium">
-            No cost to use our service • Platinum providers only • $500 network credit available
+            No cost to use our service • Vetted specialists only • Free consultation matching
           </p>
         </div>
       </section>
