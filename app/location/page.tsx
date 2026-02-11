@@ -80,7 +80,7 @@ export default function LocationPage() {
               <div className="space-y-4 text-center md:text-left">
                 <h2 className="text-3xl font-bold text-white">Start your journey in {selectedCity}</h2>
                 <p className="text-slate-400 max-w-xl font-medium">
-                  Top-tier providers in the area are currently accepting new patients with the $500 credit.
+                  Top-tier providers in the area are currently accepting new patients for consultations.
                 </p>
               </div>
               <button 
