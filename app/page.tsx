@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Shield, Sparkles, ChevronUp } from '@/components/Icons';
+import { Calendar, Shield, Sparkles, ChevronUp, CheckCircle, Globe, Users, Medal } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import FAQSection from '@/components/FAQSection';
@@ -10,12 +10,12 @@ import { FAQS_HOME } from '@/lib/data';
 
 // Marquee images for Results section
 const MARQUEE_IMAGES = [
-  'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=800&auto=format&fit=crop', // Dental examination
-  'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=800&auto=format&fit=crop', // Dental tools
-  'https://images.unsplash.com/photo-1609840114035-3c981c3f1c09?q=80&w=800&auto=format&fit=crop', // Dentist office
-  'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=800&auto=format&fit=crop', // Smile close-up
-  'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=800&auto=format&fit=crop', // Dental check
-  'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?q=80&w=800&auto=format&fit=crop', // Patient smile
+  'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1609840114035-3c981c3f1c09?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=800&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?q=80&w=800&auto=format&fit=crop',
 ];
 
 const CountUp: React.FC<{ end: number; suffix?: string; decimals?: number }> = ({ end, suffix = "", decimals = 0 }) => {
@@ -128,6 +128,60 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Why Choose Invisalign Section */}
+      <section className="py-24 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-black text-white">Why Choose Invisalign Clear Aligners?</h2>
+            <p className="text-slate-400 text-lg max-w-3xl mx-auto font-medium">
+              The modern alternative to traditional braces. Nearly invisible, removable, and designed for your lifestyle.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <CheckCircle className="w-8 h-8" />,
+                title: 'Nearly Invisible',
+                desc: 'Clear aligners are virtually undetectable. Perfect for professionals and adults who want discreet orthodontic treatment without metal brackets.'
+              },
+              {
+                icon: <Users className="w-8 h-8" />,
+                title: 'Removable Convenience',
+                desc: 'Eat, brush, and floss normally. Remove your aligners for important meetings, photos, or special occasions without compromising treatment.'
+              },
+              {
+                icon: <Shield className="w-8 h-8" />,
+                title: 'Comfortable Design',
+                desc: 'Smooth plastic aligners with no sharp metal edges. Custom-fitted to your teeth for maximum comfort throughout your smile journey.'
+              },
+              {
+                icon: <Sparkles className="w-8 h-8" />,
+                title: 'Predictable Results',
+                desc: 'Advanced 3D ClinCheck technology shows your complete treatment plan and final result before you even begin. See your future smile today.'
+              },
+              {
+                icon: <Calendar className="w-8 h-8" />,
+                title: 'Faster Treatment',
+                desc: 'Most cases complete in 6-18 months. Express and Lite options available for minor corrections in as little as 3-6 months.'
+              },
+              {
+                icon: <Globe className="w-8 h-8" />,
+                title: 'Proven Technology',
+                desc: 'Over 14 million patients treated worldwide. Backed by decades of research and continuous innovation in clear aligner therapy.'
+              }
+            ].map((item, i) => (
+              <div key={i} className="dark-card p-8 rounded-[2rem] border border-white/5 hover:border-sky-500/30 transition-all">
+                <div className="w-14 h-14 bg-sky-500/10 rounded-2xl flex items-center justify-center text-sky-400 mb-6">
+                  {item.icon}
+                </div>
+                <h3 className="text-xl font-black text-white mb-3">{item.title}</h3>
+                <p className="text-slate-400 font-medium leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Results That Inspire - Marquee Section */}
       <section className="py-16 bg-slate-950 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 mb-10 text-center">
@@ -201,11 +255,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <FAQSection faqs={FAQS_HOME} />
-
-      {/* Footer */}
-      <Footer />
-    </div>
-  );
-}
+      {/* Conditions We Treat Section */}
+      <section className="py-24 bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-black text-white">Conditions Invisalign Can Treat</h2>
+            <p className="text-slate-400 text-lg max
