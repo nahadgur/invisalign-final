@@ -166,7 +166,7 @@ export const SERVICES = [
 
 export const FAQS_HOME = [
   { q: "How does this service differ from a normal dentist?", a: "We are an independent referral network focusing on Platinum tier providers. We prioritize matching you with clinical experts who handle thousands of cases annually. This ensures you receive the highest standard of specialized care." },
-  { q: "Is the $500 network credit really available?", a: "Yes, patients who book through our referral pipeline qualify for an exclusive $500 credit. This credit is applied directly toward your full Invisalign treatment plan with our partners. It is part of our commitment to making elite care accessible." },
+  { q: "How do I get matched with the right provider?", a: "Our matching service is completely free and takes less than 2 minutes. Simply complete our quick form with your requirements and location, and we'll connect you with vetted Invisalign specialists in your area. We only work with experienced providers who meet our quality standards." },
   { q: "Is there a cost for the referral?", a: "Our referral facilitation service is completely free for patients. We help you find the perfect match and arrange your initial consultation at no charge. You only pay the clinic directly if you choose to proceed with treatment." }
 ];
 
