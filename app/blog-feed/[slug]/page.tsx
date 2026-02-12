@@ -37,7 +37,7 @@ export default function ArticlePage() {
         Papa.parse<Article>(csvText, {
           header: true,
           complete: (results) => {
-            const startDate = new Date('2026-02-16T00:00:00');
+            const startDate = new Date('2026-02-12T00:00:00');
             const articlesPerDay = 3;
             
             const articlesWithDates: ArticleWithDate[] = results.data
