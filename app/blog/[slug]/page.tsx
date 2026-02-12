@@ -226,7 +226,7 @@ export default function ArticlePage() {
           </Link>
 
           <div className="mt-10 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl">
-            <div className="relative h-[340px] bg-gradient-to-br from-slate-800 to-slate-900">
+            <div className="relative h-[420px] md:h-[520px] bg-gradient-to-br from-slate-800 to-slate-900">
               {article.featuredImage && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -358,3 +358,4 @@ export default function ArticlePage() {
     </div>
   );
 }
+
