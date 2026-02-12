@@ -102,6 +102,11 @@ export default function ArticlePage() {
     });
   };
 
+  const getExcerpt = (content: string, length: number = 120) => {
+    const text = content.replace(/<[^>]*>/g, '');
+    return text.length > length ? text.substring(0, length) + '...' : text;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
@@ -116,11 +121,11 @@ export default function ArticlePage() {
         <Navigation onOpenModal={() => setIsModalOpen(true)} />
         <div className="pt-32 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
-            <p className="text-slate-400 mb-8">This article may not be published yet or doesn't exist.</p>
+            <h1 className="text-4xl font-black text-white mb-4">Article Not Found</h1>
+            <p className="text-slate-400 mb-8 font-medium">This article may not be published yet or doesn't exist.</p>
             <Link 
               href="/blog"
-              className="inline-block bg-sky-500 hover:bg-sky-600 text-white px-8 py-3 rounded-lg transition-colors"
+              className="inline-block bg-sky-500 hover:bg-sky-600 text-white font-black px-8 py-3 rounded-xl transition-colors uppercase text-sm tracking-wider"
             >
               Back to Blog
             </Link>
@@ -137,71 +142,71 @@ export default function ArticlePage() {
       <Navigation onOpenModal={() => setIsModalOpen(true)} />
       
       <button 
-        onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-4 bg-sky-500 text-white rounded-full shadow-2xl transition-all duration-500 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16 pointer-events-none'}`}
-        aria-label="Scroll to top"
+        onClick={scrollToTop} 
+        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      <div className="pt-32 pb-20">
-        <div className="max-w-4xl mx-auto px-4">
+      <div className="pt-32 pb-24 px-4 min-h-screen bg-slate-950">
+        <div className="max-w-5xl mx-auto space-y-12">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-slate-400 mb-8">
+          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
             <Link href="/" className="hover:text-sky-400 transition-colors">Home</Link>
             <span>/</span>
             <Link href="/blog" className="hover:text-sky-400 transition-colors">Blog</Link>
             <span>/</span>
-            <span className="text-slate-200">{article['Article Title']}</span>
+            <span className="text-slate-300">{article['Article Title']}</span>
           </div>
 
-          {/* Article Header */}
-          <article className="bg-slate-900 border border-slate-800 rounded-2xl p-8 md:p-12">
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-xs font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10 px-4 py-1.5 rounded-full">
+          {/* Article */}
+          <article className="dark-card rounded-[2.5rem] border border-white/5 p-8 md:p-16 shadow-2xl">
+            {/* Header */}
+            <div className="mb-12 space-y-6">
+              <div className="flex items-center gap-4">
+                <span className="px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
                   {article.wp_category}
                 </span>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-500 font-medium">
                   {formatDate(article.publishDate)}
                 </span>
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight">
                 {article['Article Title']}
               </h1>
               
               {article['Meta Description'] && (
-                <p className="text-xl text-slate-400 leading-relaxed">
+                <p className="text-xl text-slate-400 font-medium leading-relaxed">
                   {article['Meta Description']}
                 </p>
               )}
             </div>
 
-            {/* Article Body */}
+            {/* Content */}
             <div 
               className="prose prose-invert prose-lg max-w-none
-                prose-headings:text-slate-100 prose-headings:font-bold
-                prose-p:text-slate-300 prose-p:leading-relaxed
-                prose-a:text-sky-400 prose-a:no-underline hover:prose-a:text-sky-300
-                prose-strong:text-slate-100 prose-strong:font-semibold
+                prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
+                prose-p:text-slate-300 prose-p:leading-relaxed prose-p:font-medium
+                prose-a:text-sky-400 prose-a:no-underline hover:prose-a:text-sky-300 prose-a:font-bold
+                prose-strong:text-white prose-strong:font-black
                 prose-ul:text-slate-300 prose-ol:text-slate-300
                 prose-li:marker:text-sky-400
-                prose-blockquote:border-l-sky-500 prose-blockquote:text-slate-400"
+                prose-blockquote:border-l-sky-500 prose-blockquote:text-slate-400 prose-blockquote:italic"
               dangerouslySetInnerHTML={{ __html: article['Article Content'] }}
             />
 
-            {/* CTA Section */}
-            <div className="mt-12 p-8 bg-gradient-to-r from-sky-500/10 to-blue-500/10 border border-sky-500/20 rounded-xl">
-              <h3 className="text-2xl font-bold mb-3">
+            {/* CTA */}
+            <div className="mt-16 p-10 bg-gradient-to-br from-sky-500/10 to-blue-500/10 border border-sky-500/20 rounded-3xl">
+              <h3 className="text-3xl font-black text-white mb-4">
                 Ready to Start Your Invisalign Journey?
               </h3>
-              <p className="text-slate-400 mb-6">
+              <p className="text-slate-400 mb-8 font-medium text-lg">
                 Connect with platinum-tier Invisalign providers in your area for a free consultation.
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="inline-block bg-sky-500 hover:bg-sky-600 text-white font-semibold px-8 py-4 rounded-lg transition-all hover:scale-105"
+                className="bg-sky-500 hover:bg-sky-600 text-white font-black px-10 py-4 rounded-xl transition-all hover:scale-105 uppercase text-sm tracking-wider"
               >
                 Find Your Perfect Provider
               </button>
@@ -210,22 +215,25 @@ export default function ArticlePage() {
 
           {/* Related Articles */}
           {relatedArticles.length > 0 && (
-            <section className="mt-16">
-              <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
-              <div className="grid md:grid-cols-3 gap-6">
+            <section className="space-y-8">
+              <h2 className="text-4xl font-black text-white">Related Articles</h2>
+              <div className="grid md:grid-cols-3 gap-8">
                 {relatedArticles.map((related) => (
                   <Link
                     key={related.Slug}
                     href={`/blog/${related.Slug}`}
-                    className="group bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-sky-500 transition-all"
+                    className="group dark-card rounded-[2rem] border border-white/5 p-6 hover:border-sky-500/30 transition-all duration-500 shadow-xl"
                   >
-                    <span className="text-xs font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10 px-3 py-1 rounded-full">
+                    <span className="inline-block px-3 py-1 bg-sky-500/90 backdrop-blur-md text-white text-[9px] font-black uppercase rounded-full mb-4">
                       {related.wp_category}
                     </span>
-                    <h3 className="text-lg font-bold mt-4 mb-2 group-hover:text-sky-400 transition-colors line-clamp-2">
+                    <h3 className="text-xl font-black text-white mb-3 group-hover:text-sky-400 transition-colors line-clamp-2">
                       {related['Article Title']}
                     </h3>
-                    <div className="flex items-center text-sky-400 text-sm font-semibold mt-4">
+                    <p className="text-slate-400 text-sm font-medium mb-4 line-clamp-2">
+                      {getExcerpt(related['Article Content'])}
+                    </p>
+                    <div className="flex items-center text-sky-400 text-[10px] font-black uppercase tracking-wider">
                       Read More
                       <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
