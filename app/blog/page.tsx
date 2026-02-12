@@ -142,7 +142,7 @@ export default function BlogPage() {
                 }}
                 className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-sky-500 outline-none transition-all pl-14 shadow-2xl"
               />
-              <Search className="absolute left-5 top-[60px] text-slate-500 w-6 h-6" />
+           <Search className="absolute left-5 top-[3.2rem] text-slate-500 w-6 h-6" />
             </div>
           </div>
           
