@@ -33,7 +33,7 @@ export default function BlogFeed() {
         Papa.parse<Article>(csvText, {
           header: true,
           complete: (results) => {
-            const startDate = new Date('2026-02-16T00:00:00');
+            const startDate = new Date('2026-02-11T00:00:00');
             const articlesPerDay = 3;
             
             const articlesWithDates: ArticleWithDate[] = results.data
