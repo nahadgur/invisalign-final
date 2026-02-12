@@ -97,17 +97,9 @@ export default function BlogPage() {
 
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
-  const getExcerpt = (content: string, length: number = 150) => {
+  const getExcerpt = (content: string, length: number = 120) => {
     const text = content.replace(/<[^>]*>/g, '');
     return text.length > length ? text.substring(0, length) + '...' : text;
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
   };
 
   if (loading) {
@@ -124,96 +116,82 @@ export default function BlogPage() {
       <Navigation onOpenModal={() => setIsModalOpen(true)} />
       
       <button 
-        onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 p-4 bg-sky-500 text-white rounded-full shadow-2xl transition-all duration-500 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16 pointer-events-none'}`}
-        aria-label="Scroll to top"
+        onClick={scrollToTop} 
+        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      <div className="pt-32 pb-20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-black mb-6 bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent">
-              Invisalign Insights
+      <div className="pt-32 pb-24 px-4 min-h-screen bg-slate-950">
+        <div className="max-w-7xl mx-auto space-y-16">
+          <div className="text-center space-y-6">
+            <h1 className="text-4xl md:text-7xl font-black text-white leading-tight tracking-tight">
+              Invisalign <span className="text-sky-400 italic">Insights</span>
             </h1>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Expert guidance, patient stories, and the latest innovations in clear aligner treatment
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
+              Expert clinical advice, pricing updates, and patient success stories.
             </p>
-          </div>
-
-          <div className="max-w-2xl mx-auto mb-12">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search articles..."
+            <div className="max-w-xl mx-auto relative pt-8">
+              <input 
+                type="text" 
+                placeholder="Search articles by topic..." 
                 value={blogSearchQuery}
-                onChange={(e) => setBlogSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-colors"
+                onChange={(e) => { 
+                  setBlogSearchQuery(e.target.value); 
+                  setBlogPage(1); 
+                }}
+                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-sky-500 outline-none transition-all pl-14 shadow-2xl"
               />
+              <Search className="absolute left-5 top-[60px] text-slate-500 w-6 h-6" />
             </div>
           </div>
-
-          {filteredPosts.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-xl text-slate-400">No articles found matching your search.</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                {paginatedPosts.map((post) => (
-                  <Link
-                    key={post.Slug}
-                    href={`/blog/${post.Slug}`}
-                    className="group bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 hover:border-sky-500 transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/10"
-                  >
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">
-                          {post.wp_category}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {formatDate(post.publishDate)}
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-bold mb-3 group-hover:text-sky-400 transition-colors line-clamp-2">
-                        {post['Article Title']}
-                      </h2>
-                      <p className="text-slate-400 text-sm mb-4 line-clamp-3">
-                        {getExcerpt(post['Article Content'])}
-                      </p>
-                      <div className="flex items-center text-sky-400 text-sm font-semibold">
-                        Read More
-                        <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2">
-                  <button
-                    onClick={() => setBlogPage(p => Math.max(1, p - 1))}
-                    disabled={blogPage === 1}
-                    className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-sky-500 transition-colors"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-4 py-2 text-slate-400">
-                    Page {blogPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setBlogPage(p => Math.min(totalPages, p + 1))}
-                    disabled={blogPage === totalPages}
-                    className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-sky-500 transition-colors"
-                  >
-                    Next
-                  </button>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {paginatedPosts.map((post) => (
+              <Link
+                key={post.Slug}
+                href={`/blog/${post.Slug}`}
+                className="group dark-card rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col hover:border-sky-500/30 transition-all duration-500 shadow-2xl"
+              >
+                <div className="relative h-56 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-6xl opacity-10">📝</div>
+                  </div>
+                  <div className="absolute top-6 left-6 px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
+                    {post.wp_category}
+                  </div>
                 </div>
-              )}
-            </>
+                <div className="p-8 flex-1 flex flex-col">
+                  <h2 className="text-2xl font-black text-white mb-4 group-hover:text-sky-400 transition-colors">
+                    {post['Article Title']}
+                  </h2>
+                  <p className="text-slate-400 font-medium mb-8 flex-1">
+                    {getExcerpt(post['Article Content'])}
+                  </p>
+                  <div className="flex items-center gap-2 text-sky-400 font-black uppercase tracking-widest text-[10px]">
+                    Read Article <ArrowUpRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 pt-8">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setBlogPage(page)}
+                  className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                    blogPage === page
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>
