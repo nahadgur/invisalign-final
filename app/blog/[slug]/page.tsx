@@ -107,14 +107,6 @@ export default function ArticlePage() {
     return text.length > length ? text.substring(0, length) + '...' : text;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
-        <div className="text-xl">Loading article...</div>
-      </div>
-    );
-  }
-
   if (!article) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200">
@@ -251,4 +243,5 @@ export default function ArticlePage() {
     </div>
   );
 }
+
 
