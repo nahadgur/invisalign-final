@@ -30,7 +30,6 @@ export default function BlogPage() {
   const [blogSearchQuery, setBlogSearchQuery] = useState('');
   const [blogPage, setBlogPage] = useState(1);
   const [articles, setArticles] = useState<ArticleWithDate[]>([]);
-  const [loading, setLoading] = useState(true);
   const postsPerPage = 6;
 
   // Load CSV articles with drip-feed logic
@@ -59,7 +58,6 @@ export default function BlogPage() {
               });
 
             setArticles(articlesWithDates);
-            setLoading(false);
           }
         });
       });
