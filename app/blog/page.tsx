@@ -25,7 +25,7 @@ interface ArticleWithDate extends Article {
 }
 
 const slugify = (s: string) =>
-  s
+  (s || '')
     .toLowerCase()
     .trim()
     .replace(/['"]/g, '')
@@ -33,9 +33,10 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, '');
 
 const makeUniqueSlug = (base: string, used: Set<string>) => {
-  let slug = base || 'post';
+  const cleanBase = base && base.length ? base : 'post';
+  let slug = cleanBase;
   let i = 2;
-  while (used.has(slug)) slug = `${base}-${i++}`;
+  while (used.has(slug)) slug = `${cleanBase}-${i++}`;
   used.add(slug);
   return slug;
 };
@@ -50,47 +51,60 @@ export default function BlogPage() {
 
   // Load CSV articles with drip-feed logic
   useEffect(() => {
+    let cancelled = false;
+
     fetch('/articles.csv')
-      .then(response => response.text())
-      .then(csvText => {
-     Papa.parse<Article>(csvText, {
-  header: true,
-  complete: (results) => {
-    const startDate = new Date('2026-02-10T00:00:00');
-    const articlesPerDay = 3;
-    const usedSlugs = new Set<string>();
+      .then((response) => response.text())
+      .then((csvText) => {
+        Papa.parse<Article>(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const startDate = new Date('2026-02-10T00:00:00');
+            const articlesPerDay = 3;
+            const usedSlugs = new Set<string>();
 
-    const articlesWithDates: ArticleWithDate[] = results.data
-      .filter((article: Article) => article['Article Title'])
-      .map((article: Article, index: number) => {
-        const dayOffset = Math.floor(index / articlesPerDay);
-        const publishDate = new Date(startDate);
-        publishDate.setDate(publishDate.getDate() + dayOffset);
+            const articlesWithDates: ArticleWithDate[] = (results.data || [])
+              .filter((a: Article) => a && a['Article Title'] && a['Article Title'].trim())
+              .map((a: Article, index: number) => {
+                const dayOffset = Math.floor(index / articlesPerDay);
+                const publishDate = new Date(startDate);
+                publishDate.setDate(publishDate.getDate() + dayOffset);
 
-        /* 👇 ADD THIS PART */
-        const baseSlug =
-          (article['Slug'] || '').trim() ||
-          slugify(article['Article Title']);
+                const baseSlug =
+                  (a['Slug'] || '').trim() || slugify(a['Article Title']);
 
-        const uniqueSlug = makeUniqueSlug(baseSlug, usedSlugs);
-        /* 👆 END ADD */
+                const uniqueSlug = makeUniqueSlug(baseSlug, usedSlugs);
 
-        return {
-          ...article,
-          Slug: uniqueSlug,
-          publishDate,
-          index,
-        };
+                return {
+                  ...a,
+                  Slug: uniqueSlug,
+                  publishDate,
+                  index,
+                };
+              });
+
+            if (!cancelled) {
+              setArticles(articlesWithDates);
+            }
+          },
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setArticles([]);
       });
 
-    setArticles(articlesWithDates);
-  },
-});
-  React.useEffect(() => {
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Scroll-to-top button visibility
+  useEffect(() => {
     const handleScroll = () => {
       const scrollPos = window.scrollY;
       const height = document.documentElement.scrollHeight - window.innerHeight;
-      setShowScrollTop(scrollPos / height > 0.3);
+      setShowScrollTop(height > 0 ? scrollPos / height > 0.3 : false);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -98,17 +112,23 @@ export default function BlogPage() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Filter to only show published articles (based on drip-feed schedule)
-  const today = new Date();
-  const publishedArticles = articles.filter(article => article.publishDate <= today);
+  // Only show published articles (based on drip-feed schedule)
+  const publishedArticles = useMemo(() => {
+    const today = new Date();
+    return articles.filter((article) => article.publishDate <= today);
+  }, [articles]);
 
   const filteredPosts = useMemo(() => {
     if (!blogSearchQuery) return publishedArticles;
-    return publishedArticles.filter(post => 
-      post['Article Title'].toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-      post['Article Content'].toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-      post.wp_category.toLowerCase().includes(blogSearchQuery.toLowerCase())
-    );
+
+    const q = blogSearchQuery.toLowerCase();
+
+    return publishedArticles.filter((post) => {
+      const title = (post['Article Title'] || '').toLowerCase();
+      const content = (post['Article Content'] || '').toLowerCase();
+      const cat = (post.wp_category || '').toLowerCase();
+      return title.includes(q) || content.includes(q) || cat.includes(q);
+    });
   }, [blogSearchQuery, publishedArticles]);
 
   const paginatedPosts = useMemo(() => {
@@ -119,19 +139,20 @@ export default function BlogPage() {
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
   const getExcerpt = (content: string, length: number = 120) => {
-    const text = content.replace(/<[^>]*>/g, '');
+    const text = (content || '').replace(/<[^>]*>/g, '');
     return text.length > length ? text.substring(0, length) + '...' : text;
   };
-
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <Navigation onOpenModal={() => setIsModalOpen(true)} />
-      
-      <button 
-        onClick={scrollToTop} 
-        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${
+          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
       >
         <ChevronUp className="w-6 h-6" />
       </button>
@@ -145,21 +166,25 @@ export default function BlogPage() {
             <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
               Expert clinical advice, pricing updates, and patient success stories.
             </p>
+
             <div className="max-w-xl mx-auto relative pt-8">
-              <input 
-                type="text" 
-                placeholder="Search articles by topic..." 
+              <input
+                type="text"
+                placeholder="Search articles by topic..."
                 value={blogSearchQuery}
-                onChange={(e) => { 
-                  setBlogSearchQuery(e.target.value); 
-                  setBlogPage(1); 
+                onChange={(e) => {
+                  setBlogSearchQuery(e.target.value);
+                  setBlogPage(1);
                 }}
                 className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-sky-500 outline-none transition-all pl-14 shadow-2xl"
               />
-           <Search className="absolute left-5 top-[3.2rem] text-slate-500 w-6 h-6" />
+              <Search className="absolute left-5 top-[3.2rem] text-slate-500 w-6 h-6" />
             </div>
+
+            {/* Helpful when debugging */}
+            {/* <div className="text-xs text-slate-500 pt-2">Loaded: {articles.length} | Published: {publishedArticles.length}</div> */}
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             {paginatedPosts.map((post) => (
               <Link
@@ -175,6 +200,7 @@ export default function BlogPage() {
                     {post.wp_category}
                   </div>
                 </div>
+
                 <div className="p-8 flex-1 flex flex-col">
                   <h2 className="text-2xl font-black text-white mb-4 group-hover:text-sky-400 transition-colors">
                     {post['Article Title']}
@@ -189,6 +215,12 @@ export default function BlogPage() {
               </Link>
             ))}
           </div>
+
+          {filteredPosts.length === 0 && (
+            <div className="text-center text-slate-400 font-medium">
+              No articles found.
+            </div>
+          )}
 
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 pt-8">
