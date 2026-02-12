@@ -92,45 +92,39 @@ const cleanArticleHtml = (html: string) => {
 };
 
 /* =======================
-   FURTHER READING FILTER
+   FURTHER READING
 ======================= */
 
-const BLOCKED_DOMAINS = new Set([
-  'my.clevelandclinic.org',
-  'fda.gov',
-]);
+const FURTHER_READING_POOL: ReadingLink[] = [
+  { url: 'https://www.invisalign.com', label: 'Invisalign (official site)' },
+  { url: 'https://pubmed.ncbi.nlm.nih.gov/?term=invisalign', label: 'PubMed: Invisalign research' },
+  { url: 'https://pubmed.ncbi.nlm.nih.gov/?term=clear+aligners', label: 'PubMed: Clear aligners research' },
+  { url: 'https://www.mouthhealthy.org/all-topics-a-z/orthodontics', label: 'MouthHealthy (ADA): Orthodontics' },
+  { url: 'https://www.nhs.uk/conditions/orthodontics/', label: 'NHS: Orthodontics' },
+  { url: 'https://www.mayoclinic.org/tests-procedures/braces/about/pac-20384670', label: 'Mayo Clinic: Braces overview' },
+  { url: 'https://www.cdc.gov/oralhealth', label: 'CDC: Oral health' },
+  { url: 'https://www.ajodo.org', label: 'AJODO (orthodontic journal)' },
+];
 
-const parseFurtherReading = (raw?: string): ReadingLink[] => {
-  if (!raw) return [];
-
-  return raw
-    .split('\n')
-    .map((line) => {
-      const [url, label] = line.split('|').map((s) => s.trim());
-      if (!url || !label) return null;
-      return { url, label };
-    })
-    .filter(Boolean) as ReadingLink[];
+// Simple deterministic hash so each article gets a stable, different set.
+const hashString = (s: string) => {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 };
 
-const filterFurtherReadingLinks = (links: ReadingLink[]) => {
-  const seen = new Set<string>();
+const pickFurtherReading = (key: string, count: number = 3): ReadingLink[] => {
+  const pool = FURTHER_READING_POOL;
+  if (!pool.length) return [];
+  const start = hashString(key || 'post') % pool.length;
+
   const out: ReadingLink[] = [];
-
-  for (const link of links) {
-    try {
-      const hostname = new URL(link.url).hostname.replace(/^www\./, '');
-
-      if (BLOCKED_DOMAINS.has(hostname)) continue;
-      if (seen.has(hostname)) continue;
-
-      seen.add(hostname);
-      out.push(link);
-    } catch {
-      continue;
-    }
+  for (let i = 0; i < pool.length && out.length < Math.min(count, pool.length); i++) {
+    out.push(pool[(start + i) % pool.length]);
   }
-
   return out;
 };
 
@@ -209,17 +203,15 @@ export default function ArticlePage() {
             setArticle(found);
 
             if (found) {
-              const rawLinks = parseFurtherReading(found['Further Reading']);
-              setFurtherReading(filterFurtherReadingLinks(rawLinks));
+              setFurtherReading(pickFurtherReading(found.Slug, 3));
 
-              setRelatedArticles(
-                published
-                  .filter(
-                    (a) =>
-                      a.Slug !== slug && a.wp_category === found.wp_category
-                  )
-                  .slice(0, 3)
+const sameCategory = published.filter(
+                (a) => a.Slug !== slug && a.wp_category === found.wp_category
               );
+              const fill = published.filter(
+                (a) => a.Slug !== slug && a.wp_category !== found.wp_category
+              );
+              setRelatedArticles([...sameCategory, ...fill].slice(0, 3));
             }
           },
         });
