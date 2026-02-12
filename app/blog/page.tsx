@@ -22,6 +22,7 @@ interface Article {
 interface ArticleWithDate extends Article {
   publishDate: Date;
   index: number;
+  featuredImage?: string;
 }
 
 const slugify = (s: string) =>
@@ -41,6 +42,24 @@ const makeUniqueSlug = (base: string, used: Set<string>) => {
   return slug;
 };
 
+// Extract image URLs from HTML. We’ll use the LAST one as featured image.
+const extractImageUrls = (html: string): string[] => {
+  const out: string[] = [];
+  const s = html || '';
+
+  // src="..."
+  const srcRe = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = srcRe.exec(s))) out.push(m[1]);
+
+  // bare URLs (fallback): https://...jpg/png/webp etc
+  const urlRe = /(https?:\/\/[^\s"']+\.(?:png|jpe?g|webp|gif))(?:\?[^\s"']*)?/gi;
+  while ((m = urlRe.exec(s))) out.push(m[1]);
+
+  // de-dupe while preserving order
+  return Array.from(new Set(out));
+};
+
 export default function BlogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -49,7 +68,6 @@ export default function BlogPage() {
   const [articles, setArticles] = useState<ArticleWithDate[]>([]);
   const postsPerPage = 6;
 
-  // Load CSV articles with drip-feed logic
   useEffect(() => {
     let cancelled = false;
 
@@ -73,20 +91,21 @@ export default function BlogPage() {
 
                 const baseSlug =
                   (a['Slug'] || '').trim() || slugify(a['Article Title']);
-
                 const uniqueSlug = makeUniqueSlug(baseSlug, usedSlugs);
+
+                const imgs = extractImageUrls(a['Article Content'] || '');
+                const featuredImage = imgs.length ? imgs[imgs.length - 1] : undefined;
 
                 return {
                   ...a,
                   Slug: uniqueSlug,
                   publishDate,
                   index,
+                  featuredImage,
                 };
               });
 
-            if (!cancelled) {
-              setArticles(articlesWithDates);
-            }
+            if (!cancelled) setArticles(articlesWithDates);
           },
         });
       })
@@ -99,7 +118,6 @@ export default function BlogPage() {
     };
   }, []);
 
-  // Scroll-to-top button visibility
   useEffect(() => {
     const handleScroll = () => {
       const scrollPos = window.scrollY;
@@ -112,7 +130,6 @@ export default function BlogPage() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Only show published articles (based on drip-feed schedule)
   const publishedArticles = useMemo(() => {
     const today = new Date();
     return articles.filter((article) => article.publishDate <= today);
@@ -120,9 +137,7 @@ export default function BlogPage() {
 
   const filteredPosts = useMemo(() => {
     if (!blogSearchQuery) return publishedArticles;
-
     const q = blogSearchQuery.toLowerCase();
-
     return publishedArticles.filter((post) => {
       const title = (post['Article Title'] || '').toLowerCase();
       const content = (post['Article Content'] || '').toLowerCase();
@@ -180,9 +195,6 @@ export default function BlogPage() {
               />
               <Search className="absolute left-5 top-[3.2rem] text-slate-500 w-6 h-6" />
             </div>
-
-            {/* Helpful when debugging */}
-            {/* <div className="text-xs text-slate-500 pt-2">Loaded: {articles.length} | Published: {publishedArticles.length}</div> */}
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -193,9 +205,22 @@ export default function BlogPage() {
                 className="group dark-card rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col hover:border-sky-500/30 transition-all duration-500 shadow-2xl"
               >
                 <div className="relative h-56 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-6xl opacity-10">📝</div>
-                  </div>
+                  {post.featuredImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={post.featuredImage}
+                      alt={post['Article Title']}
+                      className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-6xl opacity-10">📝</div>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
+
                   <div className="absolute top-6 left-6 px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
                     {post.wp_category}
                   </div>
