@@ -9,6 +9,10 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import LeadFormModal from '@/components/LeadFormModal';
 
+/* =======================
+   TYPES
+======================= */
+
 interface Article {
   'Article Title': string;
   'Article Content': string;
@@ -18,6 +22,7 @@ interface Article {
   'Meta Description': string;
   'Schema Markup': string;
   'Status': string;
+  'Further Reading'?: string;
 }
 
 interface ArticleWithDate extends Article {
@@ -26,6 +31,15 @@ interface ArticleWithDate extends Article {
   featuredImage?: string;
   cleanedHtml?: string;
 }
+
+type ReadingLink = {
+  url: string;
+  label: string;
+};
+
+/* =======================
+   SLUG HELPERS
+======================= */
 
 const slugify = (s: string) =>
   (s || '')
@@ -44,6 +58,10 @@ const makeUniqueSlug = (base: string, used: Set<string>) => {
   return slug;
 };
 
+/* =======================
+   IMAGE + HTML CLEANUP
+======================= */
+
 const extractImageUrls = (html: string): string[] => {
   const out: string[] = [];
   const s = html || '';
@@ -61,20 +79,64 @@ const extractImageUrls = (html: string): string[] => {
 const cleanArticleHtml = (html: string) => {
   let h = html || '';
 
-  // remove <strong> tags (keep content)
-  h = h.replace(/<\/?strong\b[^>]*>/gi, '');
+  // remove <strong> / <b>
+  h = h.replace(/<\/?(strong|b)\b[^>]*>/gi, '');
 
-  // strip inline styles so your design wins
+  // strip inline styles
   h = h.replace(/\sstyle=["'][^"']*["']/gi, '');
 
-  // remove explicit img width/height to allow responsive styling
+  // remove width/height attrs on images
   h = h.replace(/\s(width|height)=["'][^"']*["']/gi, '');
-
-  // normalize multiple <br> into one
-  h = h.replace(/(<br\s*\/?>\s*){3,}/gi, '<br /><br />');
 
   return h;
 };
+
+/* =======================
+   FURTHER READING FILTER
+======================= */
+
+const BLOCKED_DOMAINS = new Set([
+  'my.clevelandclinic.org',
+  'fda.gov',
+]);
+
+const parseFurtherReading = (raw?: string): ReadingLink[] => {
+  if (!raw) return [];
+
+  return raw
+    .split('\n')
+    .map((line) => {
+      const [url, label] = line.split('|').map((s) => s.trim());
+      if (!url || !label) return null;
+      return { url, label };
+    })
+    .filter(Boolean) as ReadingLink[];
+};
+
+const filterFurtherReadingLinks = (links: ReadingLink[]) => {
+  const seen = new Set<string>();
+  const out: ReadingLink[] = [];
+
+  for (const link of links) {
+    try {
+      const hostname = new URL(link.url).hostname.replace(/^www\./, '');
+
+      if (BLOCKED_DOMAINS.has(hostname)) continue;
+      if (seen.has(hostname)) continue;
+
+      seen.add(hostname);
+      out.push(link);
+    } catch {
+      continue;
+    }
+  }
+
+  return out;
+};
+
+/* =======================
+   PAGE
+======================= */
 
 export default function ArticlePage() {
   const params = useParams();
@@ -83,14 +145,15 @@ export default function ArticlePage() {
 
   const [article, setArticle] = useState<ArticleWithDate | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<ArticleWithDate[]>([]);
+  const [furtherReading, setFurtherReading] = useState<ReadingLink[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  /* Scroll */
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPos = window.scrollY;
-      const height = document.documentElement.scrollHeight - window.innerHeight;
-      setShowScrollTop(height > 0 ? scrollPos / height > 0.3 : false);
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      setShowScrollTop(h > 0 && window.scrollY / h > 0.3);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -98,11 +161,12 @@ export default function ArticlePage() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  /* Load article */
   useEffect(() => {
     if (!slug) return;
 
     fetch('/articles.csv')
-      .then((response) => response.text())
+      .then((r) => r.text())
       .then((csvText) => {
         Papa.parse<Article>(csvText, {
           header: true,
@@ -113,20 +177,21 @@ export default function ArticlePage() {
             const usedSlugs = new Set<string>();
 
             const all: ArticleWithDate[] = (results.data || [])
-              .filter((a: Article) => a && a['Article Title'] && a['Article Title'].trim())
-              .map((a: Article, index: number) => {
-                const dayOffset = Math.floor(index / articlesPerDay);
+              .filter((a) => a?.['Article Title'])
+              .map((a, index) => {
                 const publishDate = new Date(startDate);
-                publishDate.setDate(publishDate.getDate() + dayOffset);
+                publishDate.setDate(
+                  publishDate.getDate() + Math.floor(index / articlesPerDay)
+                );
 
-                const baseSlug =
-                  (a['Slug'] || '').trim() || slugify(a['Article Title']);
-                const uniqueSlug = makeUniqueSlug(baseSlug, usedSlugs);
+                const uniqueSlug = makeUniqueSlug(
+                  (a['Slug'] || '').trim() || slugify(a['Article Title']),
+                  usedSlugs
+                );
 
-                const imgs = extractImageUrls(a['Article Content'] || '');
-                const featuredImage = imgs.length ? imgs[imgs.length - 1] : undefined;
-
-                const cleanedHtml = cleanArticleHtml(a['Article Content'] || '');
+                const images = extractImageUrls(a['Article Content']);
+                const featuredImage =
+                  images.length > 0 ? images[images.length - 1] : undefined;
 
                 return {
                   ...a,
@@ -134,228 +199,128 @@ export default function ArticlePage() {
                   publishDate,
                   index,
                   featuredImage,
-                  cleanedHtml,
+                  cleanedHtml: cleanArticleHtml(a['Article Content']),
                 };
               });
 
-            const now = new Date();
-            const published = all.filter((a) => a.publishDate <= now);
-
+            const published = all.filter((a) => a.publishDate <= new Date());
             const found = published.find((a) => a.Slug === slug) || null;
+
             setArticle(found);
 
             if (found) {
-              const related = published
-                .filter((a) => a.Slug !== slug && a.wp_category === found.wp_category)
-                .slice(0, 3);
-              setRelatedArticles(related);
-            } else {
-              setRelatedArticles([]);
+              const rawLinks = parseFurtherReading(found['Further Reading']);
+              setFurtherReading(filterFurtherReadingLinks(rawLinks));
+
+              setRelatedArticles(
+                published
+                  .filter(
+                    (a) =>
+                      a.Slug !== slug && a.wp_category === found.wp_category
+                  )
+                  .slice(0, 3)
+              );
             }
           },
         });
-      })
-      .catch(() => {
-        setArticle(null);
-        setRelatedArticles([]);
       });
   }, [slug]);
-
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  const getExcerpt = (content: string, length: number = 120) => {
-    const text = (content || '').replace(/<[^>]*>/g, '');
-    return text.length > length ? text.substring(0, length) + '...' : text;
-  };
-
-  const bodyHtml = useMemo(() => {
-    return article?.cleanedHtml || '';
-  }, [article]);
 
   if (!article) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200">
-        <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         <Navigation onOpenModal={() => setIsModalOpen(true)} />
-
-        <div className="pt-32 pb-24 px-4">
-          <div className="max-w-5xl mx-auto">
-            <h1 className="text-3xl font-black text-white">Article not found</h1>
-            <p className="mt-4 text-slate-400 font-medium">
-              This post may not be published yet, or the URL slug doesn’t match.
-            </p>
-            <div className="mt-8">
-              <Link
-                href="/blog"
-                className="text-sky-400 font-black uppercase tracking-widest text-[11px] underline underline-offset-4"
-              >
-                Back to blog
-              </Link>
-            </div>
-          </div>
+        <div className="pt-32 px-6 max-w-5xl mx-auto">
+          <h1 className="text-3xl font-black text-white">Article not found</h1>
+          <Link href="/blog" className="text-sky-400 underline mt-6 inline-block">
+            Back to blog
+          </Link>
         </div>
-
         <Footer />
       </div>
     );
   }
+
+  /* =======================
+     RENDER
+  ======================= */
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <Navigation onOpenModal={() => setIsModalOpen(true)} />
 
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${
-          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        aria-label="Scroll to top"
-      >
-        <ChevronUp className="w-6 h-6" />
-      </button>
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 left-6 z-50 w-12 h-12 rounded-full bg-white/5 border border-white/10"
+        >
+          <ChevronUp />
+        </button>
+      )}
 
-      <div className="pt-32 pb-24 px-4">
-        <div className="max-w-5xl mx-auto">
-          <Link
-            href="/blog"
-            className="text-sky-400 font-black uppercase tracking-widest text-[11px] underline underline-offset-4"
-          >
-            Back to blog
-          </Link>
+      <div className="pt-32 px-6 max-w-5xl mx-auto">
+        <Link href="/blog" className="text-sky-400 uppercase text-xs font-black">
+          ← Back to blog
+        </Link>
 
-          <div className="mt-10 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl">
-            <div className="relative h-[420px] md:h-[520px] bg-gradient-to-br from-slate-800 to-slate-900">
-              {article.featuredImage && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={article.featuredImage}
-                  alt={article['Article Title']}
-                  className="absolute inset-0 w-full h-full object-cover opacity-90"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
-
-              <div className="absolute top-8 left-8 px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
-                {article.wp_category}
-              </div>
-
-              <div className="absolute bottom-8 left-8 right-8">
-                <div className="text-slate-300 text-sm font-medium">
-                  {formatDate(article.publishDate)}
-                </div>
-                <h1 className="mt-2 text-3xl md:text-5xl font-black text-white leading-tight tracking-tight">
-                  {article['Article Title']}
-                </h1>
-              </div>
-            </div>
-
-            <div className="p-8 md:p-12 bg-slate-950">
-              <div
-                className={[
-                  "max-w-none",
-                  "text-slate-200",
-                  "leading-relaxed",
-
-                  // Headings (use your site look: bold, tight, white)
-                  "[&_h1]:text-4xl [&_h1]:md:text-5xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-white [&_h1]:mt-10 [&_h1]:mb-5",
-                  "[&_h2]:text-3xl [&_h2]:md:text-4xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:text-white [&_h2]:mt-10 [&_h2]:mb-4",
-                  "[&_h3]:text-2xl [&_h3]:md:text-3xl [&_h3]:font-black [&_h3]:tracking-tight [&_h3]:text-white [&_h3]:mt-8 [&_h3]:mb-3",
-                  "[&_h4]:text-xl [&_h4]:font-black [&_h4]:text-white [&_h4]:mt-7 [&_h4]:mb-3",
-
-                  // Paragraphs
-                  "[&_p]:text-slate-300 [&_p]:font-medium [&_p]:leading-relaxed [&_p]:mb-5",
-
-                  // Links
-                  "[&_a]:text-sky-400 [&_a]:font-black [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-300",
-
-                  // Lists
-                  "[&_ul]:my-6 [&_ul]:pl-6 [&_ul]:space-y-2 [&_ul]:text-slate-300 [&_ul]:font-medium",
-                  "[&_ol]:my-6 [&_ol]:pl-6 [&_ol]:space-y-2 [&_ol]:text-slate-300 [&_ol]:font-medium",
-                  "[&_li]:leading-relaxed",
-
-                  // Blockquotes
-                  "[&_blockquote]:my-8 [&_blockquote]:rounded-3xl [&_blockquote]:border [&_blockquote]:border-white/10 [&_blockquote]:bg-white/5 [&_blockquote]:p-6 [&_blockquote]:text-slate-200 [&_blockquote]:font-medium",
-                  "[&_blockquote_p]:mb-0",
-
-                  // Horizontal rules
-                  "[&_hr]:my-10 [&_hr]:border-white/10",
-
-                  // Images
-                  "[&_img]:w-full [&_img]:h-auto [&_img]:rounded-3xl [&_img]:border [&_img]:border-white/10 [&_img]:shadow-2xl [&_img]:my-8",
-
-                  // Tables (overhaul)
-                  "[&_table]:w-full [&_table]:my-10 [&_table]:overflow-hidden [&_table]:rounded-3xl [&_table]:border [&_table]:border-white/10 [&_table]:bg-white/5 [&_table]:shadow-2xl",
-                  "[&_thead]:bg-white/10",
-                  "[&_th]:text-left [&_th]:px-5 [&_th]:py-4 [&_th]:text-white [&_th]:text-sm [&_th]:font-black [&_th]:tracking-wide",
-                  "[&_td]:px-5 [&_td]:py-4 [&_td]:text-slate-200 [&_td]:text-sm [&_td]:font-medium [&_td]:border-t [&_td]:border-white/10",
-                  "hover:[&_tbody_tr]:bg-white/5",
-
-                  // Code
-                  "[&_code]:px-2 [&_code]:py-1 [&_code]:rounded-lg [&_code]:bg-white/10 [&_code]:text-slate-100 [&_code]:text-[0.95em]",
-                  "[&_pre]:my-8 [&_pre]:p-6 [&_pre]:rounded-3xl [&_pre]:bg-white/5 [&_pre]:border [&_pre]:border-white/10 [&_pre]:overflow-x-auto",
-
-                  // Remove any leftover bold tags that might come from <b>
-                  "[&_b]:font-normal [&_b]:text-inherit",
-                ].join(' ')}
-                dangerouslySetInnerHTML={{ __html: bodyHtml }}
+        <div className="mt-10 rounded-[2.5rem] overflow-hidden border border-white/10">
+          <div className="relative h-[420px] md:h-[520px]">
+            {article.featuredImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={article.featuredImage}
+                alt={article['Article Title']}
+                className="absolute inset-0 w-full h-full object-cover"
               />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 to-transparent" />
+            <div className="absolute bottom-8 left-8 right-8">
+              <div className="text-sm text-slate-300">
+                {article.publishDate.toDateString()}
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black text-white">
+                {article['Article Title']}
+              </h1>
             </div>
           </div>
 
-          {relatedArticles.length > 0 && (
-            <div className="mt-16">
-              <h2 className="text-2xl font-black text-white">Related articles</h2>
-
-              <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {relatedArticles.map((a) => (
-                  <Link
-                    key={a.Slug}
-                    href={`/blog/${a.Slug}`}
-                    className="group dark-card rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col hover:border-sky-500/30 transition-all duration-500 shadow-2xl"
-                  >
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
-                      {a.featuredImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={a.featuredImage}
-                          alt={a['Article Title']}
-                          className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-6xl opacity-10">📝</div>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
-                      <div className="absolute top-6 left-6 px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
-                        {a.wp_category}
-                      </div>
-                    </div>
-
-                    <div className="p-8 flex-1 flex flex-col">
-                      <h3 className="text-xl font-black text-white mb-4 group-hover:text-sky-400 transition-colors">
-                        {a['Article Title']}
-                      </h3>
-                      <p className="text-slate-400 font-medium mb-8 flex-1">
-                        {getExcerpt(a['Article Content'] || '')}
-                      </p>
-                      <div className="flex items-center gap-2 text-sky-400 font-black uppercase tracking-widest text-[10px]">
-                        Read Article <ArrowUpRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          <div
+            className="p-10 max-w-none
+              [&_h2]:text-3xl [&_h2]:font-black [&_h2]:text-white
+              [&_p]:text-slate-300 [&_p]:leading-relaxed
+              [&_img]:rounded-3xl [&_img]:border [&_img]:border-white/10 [&_img]:my-8
+              [&_table]:w-full [&_table]:border [&_table]:border-white/10
+              [&_th]:p-4 [&_th]:text-white [&_th]:font-black
+              [&_td]:p-4 [&_td]:border-t [&_td]:border-white/10"
+            dangerouslySetInnerHTML={{ __html: article.cleanedHtml || '' }}
+          />
         </div>
+
+        {furtherReading.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-black text-white">
+              Further Reading
+            </h2>
+            <ul className="mt-6 space-y-3">
+              {furtherReading.map((l) => (
+                <li key={l.url}>
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-400 underline underline-offset-4"
+                  >
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <Footer />
     </div>
   );
 }
-
