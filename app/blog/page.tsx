@@ -102,13 +102,6 @@ export default function BlogPage() {
     return text.length > length ? text.substring(0, length) + '...' : text;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
-        <div className="text-xl">Loading articles...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
