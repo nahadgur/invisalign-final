@@ -141,8 +141,8 @@ export default function ArticlePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navigation />
-
+      <Navigation onOpenModal={() => setIsModalOpen(true)} />
+      <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 py-10">
           {!article ? (
@@ -215,3 +215,4 @@ export default function ArticlePage() {
     </div>
   );
 }
+
