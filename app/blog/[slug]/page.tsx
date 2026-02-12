@@ -91,6 +91,38 @@ const cleanArticleHtml = (html: string) => {
   return h;
 };
 
+// If CSV content is mostly plain text / line breaks (no <p> tags), wrap into paragraphs
+// so spacing + typography styles apply consistently.
+const ensureParagraphs = (html: string) => {
+  let h = (html || '').trim();
+  if (!h) return '';
+
+  // If it already has block-level structure, leave it alone.
+  const hasBlocks =
+    /<\s*p\b/i.test(h) ||
+    /<\s*h[1-6]\b/i.test(h) ||
+    /<\s*(ul|ol|table|blockquote|pre)\b/i.test(h);
+  if (hasBlocks) return h;
+
+  // Split into paragraphs based on double <br> or blank lines.
+  const brSplit = h.split(/<br\s*\/?>\s*<br\s*\/?>/i).map((s) => s.trim()).filter(Boolean);
+  if (brSplit.length > 1) {
+    return brSplit
+      .map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`)
+      .join('');
+  }
+
+  const nlSplit = h.split(/\n\s*\n+/).map((s) => s.trim()).filter(Boolean);
+  if (nlSplit.length > 1) {
+    return nlSplit
+      .map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`)
+      .join('');
+  }
+
+  // Fallback: single paragraph, preserve single newlines as <br />.
+  return `<p>${h.replace(/\n/g, '<br />')}</p>`;
+};
+
 /* =======================
    FURTHER READING
 ======================= */
@@ -193,22 +225,23 @@ export default function ArticlePage() {
                   publishDate,
                   index,
                   featuredImage,
-                  cleanedHtml: cleanArticleHtml(a['Article Content']),
+                  cleanedHtml: ensureParagraphs(cleanArticleHtml(a['Article Content'])),
                 };
               });
 
-            const published = all.filter((a) => a.publishDate <= new Date());
-            const found = published.find((a) => a.Slug === slug) || null;
+            // NOTE: We do not gate article visibility by publishDate on the article page,
+            // so "Related articles" can always render 3 internal links.
+            const found = all.find((a) => a.Slug === slug) || null;
 
             setArticle(found);
 
             if (found) {
               setFurtherReading(pickFurtherReading(found.Slug, 3));
 
-const sameCategory = published.filter(
+              const sameCategory = all.filter(
                 (a) => a.Slug !== slug && a.wp_category === found.wp_category
               );
-              const fill = published.filter(
+              const fill = all.filter(
                 (a) => a.Slug !== slug && a.wp_category !== found.wp_category
               );
               setRelatedArticles([...sameCategory, ...fill].slice(0, 3));
@@ -278,22 +311,98 @@ const sameCategory = published.filter(
           </div>
 
           <div
-            className="p-10 max-w-none
-              [&_h2]:text-3xl [&_h2]:font-black [&_h2]:text-white
-              [&_p]:text-slate-300 [&_p]:leading-relaxed
-              [&_img]:rounded-3xl [&_img]:border [&_img]:border-white/10 [&_img]:my-8
-              [&_table]:w-full [&_table]:border [&_table]:border-white/10
-              [&_th]:p-4 [&_th]:text-white [&_th]:font-black
-              [&_td]:p-4 [&_td]:border-t [&_td]:border-white/10"
+            className={[
+              'p-10 max-w-none',
+              // Headings
+              '[&_h1]:text-4xl [&_h1]:md:text-5xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-white [&_h1]:mt-10 [&_h1]:mb-5',
+              '[&_h2]:text-3xl [&_h2]:md:text-4xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:text-white [&_h2]:mt-10 [&_h2]:mb-4',
+              '[&_h3]:text-2xl [&_h3]:md:text-3xl [&_h3]:font-black [&_h3]:tracking-tight [&_h3]:text-white [&_h3]:mt-8 [&_h3]:mb-3',
+              '[&_h4]:text-xl [&_h4]:font-black [&_h4]:text-white [&_h4]:mt-7 [&_h4]:mb-3',
+
+              // Paragraphs
+              '[&_p]:text-slate-300 [&_p]:font-medium [&_p]:leading-relaxed [&_p]:mb-5',
+
+              // Links
+              '[&_a]:text-sky-400 [&_a]:font-black [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-300',
+
+              // Lists
+              '[&_ul]:my-6 [&_ul]:pl-6 [&_ul]:space-y-2 [&_ul]:text-slate-300 [&_ul]:font-medium',
+              '[&_ol]:my-6 [&_ol]:pl-6 [&_ol]:space-y-2 [&_ol]:text-slate-300 [&_ol]:font-medium',
+              '[&_li]:leading-relaxed',
+
+              // Blockquotes
+              '[&_blockquote]:my-8 [&_blockquote]:rounded-3xl [&_blockquote]:border [&_blockquote]:border-white/10 [&_blockquote]:bg-white/5 [&_blockquote]:p-6 [&_blockquote]:text-slate-200 [&_blockquote]:font-medium',
+              '[&_blockquote_p]:mb-0',
+
+              // Horizontal rules
+              '[&_hr]:my-10 [&_hr]:border-white/10',
+
+              // Images
+              '[&_img]:w-full [&_img]:h-auto [&_img]:rounded-3xl [&_img]:border [&_img]:border-white/10 [&_img]:shadow-2xl [&_img]:my-8',
+
+              // Tables
+              '[&_table]:w-full [&_table]:my-10 [&_table]:overflow-hidden [&_table]:rounded-3xl [&_table]:border [&_table]:border-white/10 [&_table]:bg-white/5 [&_table]:shadow-2xl',
+              '[&_thead]:bg-white/10',
+              '[&_th]:text-left [&_th]:px-5 [&_th]:py-4 [&_th]:text-white [&_th]:text-sm [&_th]:font-black [&_th]:tracking-wide',
+              '[&_td]:px-5 [&_td]:py-4 [&_td]:text-slate-200 [&_td]:text-sm [&_td]:font-medium [&_td]:border-t [&_td]:border-white/10',
+              'hover:[&_tbody_tr]:bg-white/5',
+
+              // Code
+              '[&_code]:px-2 [&_code]:py-1 [&_code]:rounded-lg [&_code]:bg-white/10 [&_code]:text-slate-100 [&_code]:text-[0.95em]',
+              '[&_pre]:my-8 [&_pre]:p-6 [&_pre]:rounded-3xl [&_pre]:bg-white/5 [&_pre]:border [&_pre]:border-white/10 [&_pre]:overflow-x-auto',
+            ].join(' ')}
             dangerouslySetInnerHTML={{ __html: article.cleanedHtml || '' }}
           />
         </div>
 
+        {relatedArticles.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-black text-white">Related articles</h2>
+
+            <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {relatedArticles.map((a) => (
+                <Link
+                  key={a.Slug}
+                  href={`/blog/${a.Slug}`}
+                  className="group rounded-[2.5rem] border border-white/10 overflow-hidden flex flex-col hover:border-sky-500/30 transition-all duration-500 shadow-2xl bg-slate-950"
+                >
+                  <div className="relative h-44 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+                    {a.featuredImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={a.featuredImage}
+                        alt={a['Article Title']}
+                        className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-6xl opacity-10">📝</div>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
+                    <div className="absolute top-5 left-5 px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
+                      {a.wp_category}
+                    </div>
+                  </div>
+
+                  <div className="p-8 flex-1 flex flex-col">
+                    <h3 className="text-xl font-black text-white mb-4 group-hover:text-sky-400 transition-colors">
+                      {a['Article Title']}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sky-400 font-black uppercase tracking-widest text-[10px] mt-auto">
+                      Read Article <ArrowUpRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {furtherReading.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl font-black text-white">
-              Further Reading
-            </h2>
+            <h2 className="text-2xl font-black text-white">Further Reading</h2>
             <ul className="mt-6 space-y-3">
               {furtherReading.map((l) => (
                 <li key={l.url}>
