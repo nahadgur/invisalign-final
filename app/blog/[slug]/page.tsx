@@ -326,9 +326,10 @@ export default function ArticlePage() {
               '[&_a]:text-sky-400 [&_a]:font-black [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-300',
 
               // Lists
-              '[&_ul]:my-6 [&_ul]:pl-6 [&_ul]:space-y-2 [&_ul]:text-slate-300 [&_ul]:font-medium',
-              '[&_ol]:my-6 [&_ol]:pl-6 [&_ol]:space-y-2 [&_ol]:text-slate-300 [&_ol]:font-medium',
-              '[&_li]:leading-relaxed',
+              // Ensure bullets/numbering are visible + nicely spaced
+              '[&_ul]:my-6 [&_ul]:pl-7 [&_ul]:list-disc [&_ul]:list-outside [&_ul]:space-y-3 [&_ul]:text-slate-300 [&_ul]:font-medium',
+              '[&_ol]:my-6 [&_ol]:pl-7 [&_ol]:list-decimal [&_ol]:list-outside [&_ol]:space-y-3 [&_ol]:text-slate-300 [&_ol]:font-medium',
+              '[&_li]:leading-relaxed [&_li]:pl-1 [&_li]:marker:text-sky-400',
 
               // Blockquotes
               '[&_blockquote]:my-8 [&_blockquote]:rounded-3xl [&_blockquote]:border [&_blockquote]:border-white/10 [&_blockquote]:bg-white/5 [&_blockquote]:p-6 [&_blockquote]:text-slate-200 [&_blockquote]:font-medium',
