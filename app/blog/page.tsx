@@ -24,6 +24,22 @@ interface ArticleWithDate extends Article {
   index: number;
 }
 
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const makeUniqueSlug = (base: string, used: Set<string>) => {
+  let slug = base || 'post';
+  let i = 2;
+  while (used.has(slug)) slug = `${base}-${i++}`;
+  used.add(slug);
+  return slug;
+};
+
 export default function BlogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -37,32 +53,39 @@ export default function BlogPage() {
     fetch('/articles.csv')
       .then(response => response.text())
       .then(csvText => {
-        Papa.parse<Article>(csvText, {
-          header: true,
-          complete: (results) => {
-            const startDate = new Date('2026-02-10T00:00:00');
-            const articlesPerDay = 3;
-            
-            const articlesWithDates: ArticleWithDate[] = results.data
-              .filter((article: Article) => article['Article Title'] && article['Slug'])
-              .map((article: Article, index: number) => {
-                const dayOffset = Math.floor(index / articlesPerDay);
-                const publishDate = new Date(startDate);
-                publishDate.setDate(publishDate.getDate() + dayOffset);
-                
-                return {
-                  ...article,
-                  publishDate,
-                  index
-                };
-              });
+     Papa.parse<Article>(csvText, {
+  header: true,
+  complete: (results) => {
+    const startDate = new Date('2026-02-10T00:00:00');
+    const articlesPerDay = 3;
+    const usedSlugs = new Set<string>();
 
-            setArticles(articlesWithDates);
-          }
-        });
+    const articlesWithDates: ArticleWithDate[] = results.data
+      .filter((article: Article) => article['Article Title'])
+      .map((article: Article, index: number) => {
+        const dayOffset = Math.floor(index / articlesPerDay);
+        const publishDate = new Date(startDate);
+        publishDate.setDate(publishDate.getDate() + dayOffset);
+
+        /* 👇 ADD THIS PART */
+        const baseSlug =
+          (article['Slug'] || '').trim() ||
+          slugify(article['Article Title']);
+
+        const uniqueSlug = makeUniqueSlug(baseSlug, usedSlugs);
+        /* 👆 END ADD */
+
+        return {
+          ...article,
+          Slug: uniqueSlug,
+          publishDate,
+          index,
+        };
       });
-  }, []);
 
+    setArticles(articlesWithDates);
+  },
+});
   React.useEffect(() => {
     const handleScroll = () => {
       const scrollPos = window.scrollY;
