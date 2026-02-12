@@ -54,7 +54,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
         Papa.parse<Article>(csvText, {
           header: true,
           complete: (results) => {
-            const startDate = new Date('2026-02-12T00:00:00');
+            const startDate = new Date('2026-02-10T00:00:00');
             const articlesPerDay = 3;
             
             const articlesWithDates: ArticleWithDate[] = results.data
@@ -241,6 +241,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
     </div>
   );
 }
+
 
 
 
