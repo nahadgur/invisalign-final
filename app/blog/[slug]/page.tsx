@@ -30,7 +30,7 @@ export default function ArticlePage() {
   const slug = params?.slug as string;
   const [article, setArticle] = useState<ArticleWithDate | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<ArticleWithDate[]>([]);
-=  const [isModalOpen, setIsModalOpen] = useState(false);
+const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   React.useEffect(() => {
@@ -241,6 +241,7 @@ export default function ArticlePage() {
     </div>
   );
 }
+
 
 
 
