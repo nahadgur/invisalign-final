@@ -135,16 +135,16 @@ export default function BlogPage() {
     return articles.filter((article) => article.publishDate <= today);
   }, [articles]);
 
-  const filteredPosts = useMemo(() => {
-    if (!blogSearchQuery) return publishedArticles;
-    const q = blogSearchQuery.toLowerCase();
-    return publishedArticles.filter((post) => {
-      const title = (post['Article Title'] || '').toLowerCase();
-      const content = (post['Article Content'] || '').toLowerCase();
-      const cat = (post.wp_category || '').toLowerCase();
-      return title.includes(q) || content.includes(q) || cat.includes(q);
-    });
-  }, [blogSearchQuery, publishedArticles]);
+const filteredPosts = useMemo(() => {
+  if (!blogSearchQuery) return publishedArticles;
+
+  const q = blogSearchQuery.toLowerCase().trim();
+
+  return publishedArticles.filter((post) => {
+    const title = (post['Article Title'] || '').toLowerCase();
+    return title.includes(q);
+  });
+}, [blogSearchQuery, publishedArticles]);
 
   const paginatedPosts = useMemo(() => {
     const start = (blogPage - 1) * postsPerPage;
