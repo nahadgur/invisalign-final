@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import FAQSection from '@/components/FAQSection';
 import LeadFormModal from '@/components/LeadFormModal';
 import { SERVICES, FAQS_SERVICES } from '@/lib/data';
+import Link from 'next/link';
 
 export default function ServicesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +60,11 @@ export default function ServicesPage() {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {servicesWithIcons.map((service) => (
-              <div key={service.id} className="group dark-card p-10 rounded-[2.5rem] border border-white/5 hover:border-sky-500/30 transition-all flex flex-col shadow-xl">
+              <Link 
+                key={service.id} 
+                href={`/services/${service.id}`}
+                className="group dark-card p-10 rounded-[2.5rem] border border-white/5 hover:border-sky-500/30 transition-all flex flex-col shadow-xl"
+              >
                 <div className={`mb-6 p-4 rounded-2xl bg-${service.color}-500/10 text-${service.color}-400 inline-flex self-start`}>
                   {service.icon}
                 </div>
@@ -67,13 +72,10 @@ export default function ServicesPage() {
                   {service.title}
                 </h2>
                 <p className="text-slate-400 font-medium mb-8 flex-1">{service.desc}</p>
-                <button 
-                  onClick={() => setIsModalOpen(true)} 
-                  className="flex items-center gap-2 text-sky-400 font-black uppercase tracking-widest text-[10px]"
-                >
-                  Inquire for Referral <ArrowUpRight className="w-4 h-4" />
-                </button>
-              </div>
+                <div className="flex items-center gap-2 text-sky-400 font-black uppercase tracking-widest text-[10px]">
+                  View All Locations <ArrowUpRight className="w-4 h-4" />
+                </div>
+              </Link>
             ))}
           </div>
         </div>
