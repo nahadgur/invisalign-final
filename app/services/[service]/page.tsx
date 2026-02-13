@@ -65,9 +65,10 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      {/* Hero Section with Image */}
-     <div className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20 md:pt-32 md:pb-24 min-h-[640px] sm:min-h-[680px] md:min-h-[720px]">
-  <div className="absolute inset-0 z-0 relative">
+{/* Hero Section with Image */}
+<div className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20 md:pt-32 md:pb-24 min-h-[640px] sm:min-h-[680px] md:min-h-[720px]">
+  {/* Background Image with Overlay */}
+  <div className="absolute inset-0 z-0">
     <Image
       src={heroImage}
       alt={service.title}
@@ -76,57 +77,66 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
       sizes="100vw"
       className="object-cover object-center opacity-40"
     />
-    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950"></div>
+    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950" />
+  </div>
+
+  {/* Content */}
+  <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-12">
+    <div className="text-center space-y-6">
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4 backdrop-blur-sm">
+        <Link href="/services" className="hover:text-sky-400 transition-colors">
+          All Services
+        </Link>
+        <span>/</span>
+        <span className="text-white">{service.title}</span>
+      </div>
+
+      <h1 className="text-4xl md:text-7xl font-black text-white leading-tight tracking-tight">
+        {service.title} in{" "}
+        <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">
+          {allCities.length}+ UK Locations
+        </span>
+      </h1>
+
+      <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
+        {service.desc} Find Platinum providers near you.
+      </p>
+
+      <div className="max-w-xl mx-auto relative mt-8 flex items-center">
+        <Globe className="absolute left-6 text-slate-500 w-6 h-6 z-10" />
+        <input
+          type="text"
+          placeholder="Search your city or town..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 pl-16 text-white focus:border-sky-500 outline-none transition-all shadow-2xl backdrop-blur-sm"
+        />
+      </div>
+    </div>
+
+    <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5 backdrop-blur-sm">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="space-y-4 text-center md:text-left">
+          <h2 className="text-3xl font-bold text-white">
+            Ready to Start Your Treatment?
+          </h2>
+          <p className="text-slate-400 max-w-xl font-medium">
+            Connect with elite Platinum providers specializing in{" "}
+            {service.title.toLowerCase()}.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-10 py-5 bg-sky-500 text-white font-black rounded-full shadow-2xl hover:scale-105 transition-all whitespace-nowrap"
+        >
+          Get Matched
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
-        {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-12">
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4 backdrop-blur-sm">
-              <Link href="/services" className="hover:text-sky-400 transition-colors">All Services</Link>
-              <span>/</span>
-              <span className="text-white">{service.title}</span>
-            </div>
-            
-            <h1 className="text-4xl md:text-7xl font-black text-white leading-tight tracking-tight">
-              {service.title} in <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">{allCities.length}+ UK Locations</span>
-            </h1>
-            
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
-              {service.desc} Find Platinum providers near you.
-            </p>
-
-            <div className="max-w-xl mx-auto relative mt-8 flex items-center">
-              <Globe className="absolute left-6 text-slate-500 w-6 h-6 z-10" />
-              <input 
-                type="text" 
-                placeholder="Search your city or town..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 pl-16 text-white focus:border-sky-500 outline-none transition-all shadow-2xl backdrop-blur-sm"
-              />
-            </div>
-          </div>
-
-          <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5 backdrop-blur-sm">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="space-y-4 text-center md:text-left">
-                <h2 className="text-3xl font-bold text-white">Ready to Start Your Treatment?</h2>
-                <p className="text-slate-400 max-w-xl font-medium">
-                  Connect with elite Platinum providers specializing in {service.title.toLowerCase()}.
-                </p>
-              </div>
-              <button 
-                onClick={() => setIsModalOpen(true)} 
-                className="px-10 py-5 bg-sky-500 text-white font-black rounded-full shadow-2xl hover:scale-105 transition-all whitespace-nowrap"
-              >
-                Get Matched
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Cities Grid */}
       <div className="pb-24 bg-slate-950">
