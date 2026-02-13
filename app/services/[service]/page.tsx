@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useMemo } from 'react';
 import { Globe, ArrowUpRight, ChevronUp } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
