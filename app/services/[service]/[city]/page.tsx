@@ -76,14 +76,13 @@ export default function ServiceCityPage({ params }: { params: { service: string;
       {/* Hero Section with Image */}
       <div className="relative pt-32 pb-24 overflow-hidden">
         {/* Background Image with Overlay */}
-     <div className="absolute inset-0 z-0">
-  <img 
-    src={heroImage}
-    alt={`${service.title} in ${cityName}`}
-    className="w-full h-full object-cover opacity-40"
-  />
-  <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/70 to-slate-950"></div>
-</div>
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage}
+            alt={`${service.title} in ${cityName}`}
+            className="w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950"></div>
         </div>
 
         {/* Content */}
