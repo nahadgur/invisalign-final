@@ -118,29 +118,29 @@ export default function LocationPage() {
 
                     return (
                       <Link
-                        key={city}
-                        href={`/location/${citySlug}`}
-                        className={`text-left px-5 py-4 rounded-2xl border transition-all font-bold text-sm sm:text-base flex items-center justify-between group ${
-                          selectedCity === city
-                            ? 'bg-sky-500/20 border-sky-500 text-sky-400 shadow-lg shadow-sky-500/5'
-                            : 'bg-slate-900/40 border-white/5 text-slate-300 hover:border-sky-500/30 hover:text-white hover:bg-slate-800/40'
-                        }`}
-                        onClick={(e) => {
-                          if (selectedCity === city) {
-                            e.preventDefault();
-                            handleCityClick(city);
-                          }
-                        }}
-                      >
-                        <span className="leading-tight">{city}</span>
-                        <ArrowUpRight
-                          className={`w-4 h-4 transition-all ${
-                            selectedCity === city
-                              ? 'opacity-100'
-                              : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5'
-                          }`}
-                        />
-                      </Link>
+  key={city}
+  href={`/location/${citySlug}`}
+  className={`text-left px-6 py-5 rounded-2xl border transition-all font-bold text-base sm:text-lg leading-relaxed flex items-center justify-between group ${
+    selectedCity === city
+      ? 'bg-sky-500/20 border-sky-500 text-sky-400 shadow-lg shadow-sky-500/5'
+      : 'bg-slate-900/40 border-white/5 text-slate-300 hover:border-sky-500/30 hover:text-white hover:bg-slate-800/40'
+  }`}
+  onClick={(e) => {
+    if (selectedCity === city) {
+      e.preventDefault();
+      handleCityClick(city);
+    }
+  }}
+>
+  <span className="leading-snug">{city}</span>
+  <ArrowUpRight
+    className={`w-5 h-5 transition-all ${
+      selectedCity === city
+        ? 'opacity-100'
+        : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5'
+    }`}
+  />
+</Link>
                     );
                   })}
                 </div>
