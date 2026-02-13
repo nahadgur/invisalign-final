@@ -31,30 +31,40 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
 
   if (!shouldRender) return null;
 
-const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setIsSubmitting(true);
 
   try {
+    const form = e.currentTarget;
+    const fullName = (form.elements[0] as HTMLInputElement).value;
+    const email = (form.elements[1] as HTMLInputElement).value;
+    const location = (form.elements[2] as HTMLInputElement).value;
+
+    const payload = {
+      fullName,
+      email,
+      location,
+      page: window.location.href,
+      source: "Website Lead",
+    };
+
     const res = await fetch(
       'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: (e.target as any)[0].value,
-          email: (e.target as any)[1].value,
-          location: (e.target as any)[2].value,
-          page: window.location.href,
-          source: "Website Lead"
-        }),
+        // IMPORTANT: do NOT set Content-Type: application/json (causes CORS preflight)
+        body: JSON.stringify(payload),
       }
     );
 
-    const data = await res.json();
+    // Apps Script sometimes returns text; parse safely
+    const text = await res.text();
+    let data: any = {};
+    try { data = JSON.parse(text); } catch {}
 
-    if (!data.ok) {
-      throw new Error(data.error || "Submission failed");
+    if (data && data.ok === false) {
+      throw new Error(data.error || 'Submission failed');
     }
 
     setIsSubmitting(false);
@@ -64,13 +74,13 @@ const handleSubmit = async (e: React.FormEvent) => {
       setIsSuccess(false);
       onClose();
     }, 3000);
-
   } catch (err) {
     console.error(err);
     setIsSubmitting(false);
     alert("Something went wrong. Please try again.");
   }
 };
+
 
 
   const handleBackdropClick = (e: React.MouseEvent) => {
