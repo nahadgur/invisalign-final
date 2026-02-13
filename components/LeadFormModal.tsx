@@ -46,7 +46,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       email,
       location,
       page: window.location.href,
-      source: "Website Lead",
+      source: "Savvy Dental Implants",
     };
 
     const res = await fetch(
