@@ -60,214 +60,403 @@ const extractImageUrls = (html: string): string[] => {
   return Array.from(new Set(out));
 };
 
+const stripHtml = (html: string) => (html || '').replace(/<[^>]*>/g, '').trim();
+
+const formatDate = (d: Date) =>
+  d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+
+const getPublishDate = (row: Article, fallbackIndex: number) => {
+  // Try to read a date from Schema Markup if present (YYYY-MM-DD or ISO).
+  const schema = row['Schema Markup'] || '';
+  const isoMatch = schema.match(
+    /("datePublished"\s*:\s*"([^"]+)"|datePublished\s*=\s*"([^"]+)")/i
+  );
+  const raw = (isoMatch?.[2] || isoMatch?.[3] || '').trim();
+
+  const parsed = raw ? new Date(raw) : null;
+  if (parsed && !isNaN(parsed.getTime())) return parsed;
+
+  // Otherwise, create a stable fallback date based on the index (older posts further back).
+  const now = new Date();
+  const d = new Date(now);
+  d.setDate(now.getDate() - fallbackIndex);
+  return d;
+};
+
+const getExcerpt = (contentHtml: string, maxLen = 170) => {
+  const text = stripHtml(contentHtml);
+  if (!text) return '';
+  if (text.length <= maxLen) return text;
+  return `${text.slice(0, maxLen).trim()}…`;
+};
+
+const highlight = (text: string, query: string) => {
+  if (!query) return text;
+  const q = query.trim();
+  if (!q) return text;
+
+  const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+  return parts
+    .map((p, i) =>
+      p.toLowerCase() === q.toLowerCase()
+        ? `<mark class="bg-slate-700/70 text-slate-100 px-1 rounded">${p}</mark>`
+        : p
+    )
+    .join('');
+};
+
 export default function BlogPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [blogSearchQuery, setBlogSearchQuery] = useState('');
-  const [blogPage, setBlogPage] = useState(1);
   const [articles, setArticles] = useState<ArticleWithDate[]>([]);
-  const postsPerPage = 6;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // back-to-top
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 700);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    const fetchCsv = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    fetch('/articles.csv')
-      .then((response) => response.text())
-      .then((csvText) => {
-        Papa.parse<Article>(csvText, {
+        const res = await fetch('/data/blog-posts.csv', { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`Failed to load blog data (HTTP ${res.status})`);
+        }
+        const csvText = await res.text();
+
+        const parsed = Papa.parse<Article>(csvText, {
           header: true,
           skipEmptyLines: true,
-          complete: (results) => {
-            const startDate = new Date('2026-02-10T00:00:00');
-            const articlesPerDay = 3;
-            const usedSlugs = new Set<string>();
-
-            const articlesWithDates: ArticleWithDate[] = (results.data || [])
-              .filter((a: Article) => a && a['Article Title'] && a['Article Title'].trim())
-              .map((a: Article, index: number) => {
-                const dayOffset = Math.floor(index / articlesPerDay);
-                const publishDate = new Date(startDate);
-                publishDate.setDate(publishDate.getDate() + dayOffset);
-
-                const baseSlug =
-                  (a['Slug'] || '').trim() || slugify(a['Article Title']);
-                const uniqueSlug = makeUniqueSlug(baseSlug, usedSlugs);
-
-                const imgs = extractImageUrls(a['Article Content'] || '');
-                const featuredImage = imgs.length ? imgs[imgs.length - 1] : undefined;
-
-                return {
-                  ...a,
-                  Slug: uniqueSlug,
-                  publishDate,
-                  index,
-                  featuredImage,
-                };
-              });
-
-            if (!cancelled) setArticles(articlesWithDates);
-          },
         });
-      })
-      .catch(() => {
-        if (!cancelled) setArticles([]);
-      });
 
-    return () => {
-      cancelled = true;
+        if (parsed.errors?.length) {
+          console.warn('CSV parse errors:', parsed.errors);
+        }
+
+        const rows = (parsed.data || []).filter(
+          (r) =>
+            (r?.['Article Title'] || '').trim().length > 0 &&
+            (r?.['Article Content'] || '').trim().length > 0
+        );
+
+        // Create unique slugs if missing/duplicated
+        const used = new Set<string>();
+        const withDates: ArticleWithDate[] = rows.map((row, index) => {
+          const baseSlug = (row['Slug'] || '').trim()
+            ? slugify(row['Slug'])
+            : slugify(row['Article Title']);
+          const unique = makeUniqueSlug(baseSlug, used);
+
+          const publishDate = getPublishDate(row, index);
+
+          const imgs = extractImageUrls(row['Article Content']);
+          const featuredImage = imgs.length ? imgs[imgs.length - 1] : undefined;
+
+          return {
+            ...row,
+            Slug: unique,
+            publishDate,
+            index,
+            featuredImage,
+          };
+        });
+
+        setArticles(withDates);
+      } catch (e: any) {
+        console.error(e);
+        setError(e?.message || 'Something went wrong loading the blog posts.');
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchCsv();
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPos = window.scrollY;
-      const height = document.documentElement.scrollHeight - window.innerHeight;
-      setShowScrollTop(height > 0 ? scrollPos / height > 0.3 : false);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  const publishedArticles = useMemo(() => {
-    const today = new Date();
-    return articles.filter((article) => article.publishDate <= today);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of articles) {
+      const c = (a.wp_category || '').trim();
+      if (c) set.add(c);
+    }
+    return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
   }, [articles]);
 
-const filteredPosts = useMemo(() => {
-  if (!blogSearchQuery) return publishedArticles;
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
 
-  const q = blogSearchQuery.toLowerCase().trim();
+    let list = articles.slice();
 
-  return publishedArticles.filter((post) => {
-    const title = (post['Article Title'] || '').toLowerCase();
-    return title.includes(q);
-  });
-}, [blogSearchQuery, publishedArticles]);
+    if (activeCategory !== 'All') {
+      list = list.filter((a) => (a.wp_category || '').trim() === activeCategory);
+    }
 
-  const paginatedPosts = useMemo(() => {
-    const start = (blogPage - 1) * postsPerPage;
-    return filteredPosts.slice(start, start + postsPerPage);
-  }, [filteredPosts, blogPage]);
+    if (q) {
+      list = list.filter((a) => {
+        const title = (a['Article Title'] || '').toLowerCase();
+        const content = stripHtml(a['Article Content'] || '').toLowerCase();
+        const meta = (a['Meta Title'] || '').toLowerCase();
+        const desc = (a['Meta Description'] || '').toLowerCase();
+        return (
+          title.includes(q) ||
+          content.includes(q) ||
+          meta.includes(q) ||
+          desc.includes(q)
+        );
+      });
+    }
 
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+    list.sort((a, b) => {
+      const at = a.publishDate.getTime();
+      const bt = b.publishDate.getTime();
+      return sortBy === 'newest' ? bt - at : at - bt;
+    });
 
-  const getExcerpt = (content: string, length: number = 120) => {
-    const text = (content || '').replace(/<[^>]*>/g, '');
-    return text.length > length ? text.substring(0, length) + '...' : text;
-  };
+    return list;
+  }, [articles, query, activeCategory, sortBy]);
+
+  const featured = useMemo(() => filtered.slice(0, 3), [filtered]);
+  const rest = useMemo(() => filtered.slice(3), [filtered]);
+
+  const onCategoryClick = (c: string) => setActiveCategory(c);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      < onOpenModal={() => setIsModalOpen(true)} />
 
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${
-          showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-      >
-        <ChevronUp className="w-6 h-6" />
-      </button>
+      {/* FIX: this used to be "< onOpenModal=... />" which breaks JSX */}
+      <Navigation onOpenModal={() => setIsModalOpen(true)} />
 
-      <div className="pt-32 pb-24 px-4 min-h-screen bg-slate-950">
-        <div className="max-w-7xl mx-auto space-y-16">
-          <div className="text-center space-y-6">
-            <h1 className="text-4xl md:text-7xl font-black text-white leading-tight tracking-tight">
-              Invisalign <span className="text-sky-400 italic">Insights</span>
-            </h1>
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
-              Expert clinical advice, pricing updates, and patient success stories.
-            </p>
-
-            <div className="max-w-xl mx-auto relative pt-8">
-              <input
-                type="text"
-                placeholder="Search articles by topic..."
-                value={blogSearchQuery}
-                onChange={(e) => {
-                  setBlogSearchQuery(e.target.value);
-                  setBlogPage(1);
-                }}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-sky-500 outline-none transition-all pl-14 shadow-2xl"
-              />
-              <Search className="absolute left-5 top-[3.2rem] text-slate-500 w-6 h-6" />
+      <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-10">
+        <header className="mb-10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-50 sm:text-4xl">
+                Invisalign Blog
+              </h1>
+              <p className="mt-2 max-w-2xl text-slate-300">
+                Evidence-based Invisalign insights, tips, and guides. Search or browse by category.
+              </p>
             </div>
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {paginatedPosts.map((post) => (
-              <Link
-                key={post.Slug}
-                href={`/blog/${post.Slug}`}
-                className="group dark-card rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col hover:border-sky-500/30 transition-all duration-500 shadow-2xl"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSortBy((s) => (s === 'newest' ? 'oldest' : 'newest'))}
+                className="rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 hover:bg-slate-900"
               >
-                <div className="relative h-56 overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
-                  {post.featuredImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={post.featuredImage}
-                      alt={post['Article Title']}
-                      className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-6xl opacity-10">📝</div>
-                    </div>
-                  )}
+                Sort: {sortBy === 'newest' ? 'Newest' : 'Oldest'}
+              </button>
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
-
-                  <div className="absolute top-6 left-6 px-4 py-1.5 bg-sky-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase rounded-full">
-                    {post.wp_category}
-                  </div>
-                </div>
-
-                <div className="p-8 flex-1 flex flex-col">
-                  <h2 className="text-2xl font-black text-white mb-4 group-hover:text-sky-400 transition-colors">
-                    {post['Article Title']}
-                  </h2>
-                  <p className="text-slate-400 font-medium mb-8 flex-1">
-                    {getExcerpt(post['Article Content'])}
-                  </p>
-                  <div className="flex items-center gap-2 text-sky-400 font-black uppercase tracking-widest text-[10px]">
-                    Read Article <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </Link>
-            ))}
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="rounded-xl bg-emerald-500/90 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-500"
+              >
+                Get a free consult
+              </button>
+            </div>
           </div>
 
-          {filteredPosts.length === 0 && (
-            <div className="text-center text-slate-400 font-medium">
-              No articles found.
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 opacity-80">
+                <Search />
+              </div>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search articles…"
+                className="w-full rounded-xl border border-slate-700 bg-slate-900/60 py-3 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-400 outline-none focus:border-slate-500"
+              />
             </div>
-          )}
 
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 pt-8">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setBlogPage(page)}
-                  className={`px-4 py-2 rounded-xl font-bold transition-all ${
-                    blogPage === page
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {categories.map((c) => {
+                const active = c === activeCategory;
+                return (
+                  <button
+                    key={c}
+                    onClick={() => onCategoryClick(c)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      active
+                        ? 'border-slate-400 bg-slate-200 text-slate-950'
+                        : 'border-slate-700 bg-slate-900/30 text-slate-200 hover:bg-slate-900/70'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </header>
+
+        {loading && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
+            Loading articles…
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-6 text-red-200">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/30 p-6">
+            No articles match your search.
+          </div>
+        )}
+
+        {!loading && !error && filtered.length > 0 && (
+          <>
+            <section className="mb-12">
+              <div className="mb-4 flex items-end justify-between">
+                <h2 className="text-lg font-semibold text-slate-50">Featured</h2>
+                <span className="text-sm text-slate-400">
+                  Showing {filtered.length} article{filtered.length === 1 ? '' : 's'}
+                </span>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                {featured.map((a) => {
+                  const href = `/blog/${a.Slug}`;
+                  const excerpt = getExcerpt(a['Article Content'], 140);
+
+                  const titleHtml = highlight(a['Article Title'] || '', query);
+                  const excerptHtml = highlight(excerpt, query);
+
+                  return (
+                    <Link
+                      key={a.Slug}
+                      href={href}
+                      className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40 p-5 shadow-sm transition hover:border-slate-600 hover:bg-slate-900/60"
+                    >
+                      {a.featuredImage && (
+                        <div className="mb-4 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={a.featuredImage}
+                            alt={a['Article Title']}
+                            className="h-40 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs text-slate-400">
+                          {a.wp_category ? a.wp_category : 'General'} • {formatDate(a.publishDate)}
+                        </div>
+                        <span className="opacity-60 transition group-hover:opacity-100">
+                          <ArrowUpRight />
+                        </span>
+                      </div>
+
+                      <h3
+                        className="mt-2 text-base font-semibold text-slate-50"
+                        dangerouslySetInnerHTML={{ __html: titleHtml }}
+                      />
+
+                      <p
+                        className="mt-2 text-sm text-slate-300"
+                        dangerouslySetInnerHTML={{ __html: excerptHtml }}
+                      />
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section>
+              <div className="mb-4 flex items-end justify-between">
+                <h2 className="text-lg font-semibold text-slate-50">All posts</h2>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {rest.map((a) => {
+                  const href = `/blog/${a.Slug}`;
+                  const excerpt = getExcerpt(a['Article Content'], 170);
+
+                  const titleHtml = highlight(a['Article Title'] || '', query);
+                  const excerptHtml = highlight(excerpt, query);
+
+                  return (
+                    <Link
+                      key={a.Slug}
+                      href={href}
+                      className="group flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900/30 p-5 transition hover:border-slate-600 hover:bg-slate-900/60"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs text-slate-400">
+                          {a.wp_category ? a.wp_category : 'General'} • {formatDate(a.publishDate)}
+                        </div>
+                        <span className="opacity-60 transition group-hover:opacity-100">
+                          <ArrowUpRight />
+                        </span>
+                      </div>
+
+                      <div className="flex gap-4">
+                        {a.featuredImage && (
+                          <div className="hidden w-28 flex-shrink-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 sm:block">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={a.featuredImage}
+                              alt={a['Article Title']}
+                              className="h-20 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+
+                        <div className="min-w-0">
+                          <h3
+                            className="text-base font-semibold text-slate-50"
+                            dangerouslySetInnerHTML={{ __html: titleHtml }}
+                          />
+                          <p
+                            className="mt-2 text-sm text-slate-300"
+                            dangerouslySetInnerHTML={{ __html: excerptHtml }}
+                          />
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          </>
+        )}
+      </main>
 
       <Footer />
+
+      {showTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 rounded-full border border-slate-700 bg-slate-900/80 p-3 text-slate-100 shadow-lg hover:bg-slate-900"
+          aria-label="Back to top"
+        >
+          <ChevronUp />
+        </button>
+      )}
     </div>
   );
 }
