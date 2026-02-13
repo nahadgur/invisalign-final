@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Block non-public or utility paths (adjust if these routes exist on your site)
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login/
+Disallow: /logout/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /search/
+Disallow: /*?*
+Disallow: /*&*
+
+Sitemap: https://invisaligndentists.com/sitemap.xml
