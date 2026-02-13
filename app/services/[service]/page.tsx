@@ -69,13 +69,13 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
       <div className="relative pt-32 pb-24 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage}
-            alt={service.title}
-            className="w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950"></div>
-        </div>
+  <img 
+    src={heroImage}
+    alt={`${service.title} in ${cityName}`}
+    className="w-full h-full object-cover opacity-40"
+  />
+  <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950"></div>
+</div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-12">
