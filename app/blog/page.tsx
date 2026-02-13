@@ -49,8 +49,9 @@ const CountUp: React.FC<{ end: number; suffix?: string; decimals?: number }> = (
   return <span ref={elementRef}>{count.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</span>;
 };
 
+type FAQ = { question: string; answer: string } | { q: string; a: string };
 
-const FAQAccordion: React.FC<{ faqs: { question: string; answer: string }[] }> = ({ faqs }) => {
+const FAQAccordion: React.FC<{ faqs: FAQ[] }> = ({ faqs }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
@@ -65,8 +66,8 @@ const FAQAccordion: React.FC<{ faqs: { question: string; answer: string }[] }> =
           {faqs.map((faq, i) => (
             <FAQItem
               key={i}
-              question={faq.question}
-              answer={faq.answer}
+              question={'question' in faq ? faq.question : faq.q}
+              answer={'answer' in faq ? faq.answer : faq.a}
               isOpen={openIndex === i}
               onToggle={() => setOpenIndex(openIndex === i ? null : i)}
             />
@@ -91,88 +92,101 @@ const FAQItem: React.FC<{
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between gap-4 p-6 text-left"
+        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
         aria-expanded={isOpen}
       >
         <span className="text-lg font-bold text-white">{question}</span>
-        <ChevronUp
-          className={`h-5 w-5 text-slate-300 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
-        />
+        <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+          <ChevronUp className="w-5 h-5 text-slate-400" />
+        </span>
       </button>
 
-      <div className="overflow-hidden transition-[max-height] duration-300 ease-in-out" style={{ maxHeight }}>
-        <div
-          ref={bodyRef}
-          className={`px-6 pb-6 text-slate-300 leading-relaxed transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-        >
-          {answer}
+      <div
+        style={{ maxHeight }}
+        className="transition-[max-height] duration-300 ease-in-out overflow-hidden"
+      >
+        <div ref={bodyRef} className="px-6 pb-6">
+          <p className="text-slate-400 font-medium leading-relaxed">{answer}</p>
         </div>
       </div>
     </div>
   );
 };
 
-export default function Home() {
+export default function BlogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPos = window.scrollY;
-      const height = document.documentElement.scrollHeight - window.innerHeight;
-      setShowScrollTop(scrollPos / height > 0.3);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
+    <div className="min-h-screen bg-slate-950 text-white">
+      <Navigation />
+
       <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      <Navigation onOpenModal={() => setIsModalOpen(true)} />
-      
-      <button 
-        onClick={scrollToTop} 
-        className={`fixed bottom-6 left-6 z-[70] w-12 h-12 bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 rounded-full flex items-center justify-center transition-all duration-500 ${showScrollTop ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      >
-        <ChevronUp className="w-6 h-6" />
-      </button>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 px-4">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1694675236489-d73651370688?q=80&w=880&auto=format&fit=crop" 
-            className="w-full h-full object-cover opacity-90 animate-slow-zoom brightness-110" 
-            alt="Invisalign Clear Aligners" 
-          />
-          <div className="absolute inset-0 bg-slate-950/30"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/70"></div>
-        </div>
-        <div className="max-w-5xl mx-auto relative z-10 text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-sm font-bold">
-            <Sparkles className="w-4 h-4" />
-            <span>Premium Invisalign Facilitator</span>
+      <section className="relative overflow-hidden pt-24 pb-20 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-500/20">
+                <Shield className="w-5 h-5 text-sky-400" />
+                <span className="text-sky-400 text-sm font-bold tracking-wide uppercase">Platinum Provider Network</span>
+              </div>
+              <h1 className="text-5xl md:text-6xl font-black leading-tight">
+                Find the Best <span className="text-sky-400">Invisalign Dentists</span> Near You
+              </h1>
+              <p className="text-xl text-slate-300 font-medium leading-relaxed max-w-xl">
+                Get matched with experienced Invisalign providers. Transparent pricing, free consultation, and results you’ll love.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="pulse-glow px-10 py-5 bg-sky-500 text-white text-lg font-bold rounded-full shadow-2xl hover:scale-105 transition-all"
+                >
+                  Get Matched Now
+                </button>
+                <button className="px-10 py-5 bg-slate-900/60 border border-white/10 text-white text-lg font-bold rounded-full hover:border-sky-500/30 transition-all">
+                  Learn How It Works
+                </button>
+              </div>
+              <div className="flex items-center gap-8 pt-6">
+                <div className="space-y-1">
+                  <p className="text-3xl font-black text-white"><CountUp end={350} suffix="+" /></p>
+                  <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Specialists</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-3xl font-black text-white"><CountUp end={98} suffix="%" /></p>
+                  <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Satisfaction</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-3xl font-black text-white"><CountUp end={24} suffix="h" /></p>
+                  <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Response</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="dark-card p-8 rounded-[2.5rem] border border-white/5">
+                <img
+                  src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=1200&auto=format&fit=crop"
+                  alt="Invisalign Dentist"
+                  className="w-full h-[540px] object-cover rounded-2xl"
+                />
+              </div>
+              <div className="absolute -bottom-6 -left-6 dark-card p-6 rounded-2xl border border-sky-500/30 bg-slate-900/90 backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-8 h-8 text-sky-400" />
+                  <div>
+                    <p className="text-2xl font-black text-white">Free</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Consultation Matching</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
-          <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black text-white leading-tight">
-            The Network for <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-400 to-sky-400 animate-gradient">
-              Elite Results.
-            </span>
-          </h1>
-          <p className="text-lg lg:text-2xl text-slate-300 max-w-3xl mx-auto font-medium">
-            Connecting discerning patients with the top 1% of Platinum Invisalign providers for verified orthodontic results.
-          </p>
-          <button 
-            onClick={() => setIsModalOpen(true)} 
-            className="pulse-glow px-12 py-6 bg-sky-500 text-white text-xl font-bold rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all"
-          >
-            Find My Specialist
-          </button>
         </div>
       </section>
+
 
       {/* Stats Section */}
       <div className="bg-slate-900 border-y border-white/5 py-12">
@@ -431,7 +445,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ Section */}
+         {/* FAQ Section */}
       <FAQAccordion faqs={FAQS_HOME} />
 
       {/* Final CTA Section */}
@@ -443,7 +457,7 @@ export default function Home() {
           <p className="text-xl text-slate-400 font-medium max-w-2xl mx-auto">
             Connect with a Platinum Invisalign provider in your area. Free consultation, expert care, and results you'll love.
           </p>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="pulse-glow px-12 py-6 bg-sky-500 text-white text-xl font-bold rounded-full shadow-2xl hover:scale-105 transition-all"
           >
@@ -455,7 +469,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
       <Footer />
     </div>
   );
