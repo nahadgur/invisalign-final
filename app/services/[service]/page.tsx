@@ -66,16 +66,19 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
       </button>
 
       {/* Hero Section with Image */}
-      <div className="relative pt-32 pb-24 overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage}
-            alt={service.title}
-            className="w-full h-full object-cover opacity-40"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950"></div>
-        </div>
+     <div className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20 md:pt-32 md:pb-24 min-h-[640px] sm:min-h-[680px] md:min-h-[720px]">
+  <div className="absolute inset-0 z-0 relative">
+    <Image
+      src={heroImage}
+      alt={service.title}
+      fill
+      priority
+      sizes="100vw"
+      className="object-cover object-center opacity-40"
+    />
+    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950"></div>
+  </div>
+</div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-12">
