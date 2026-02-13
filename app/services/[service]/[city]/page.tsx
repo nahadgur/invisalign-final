@@ -10,6 +10,15 @@ import { SERVICES, LOCATIONS, FAQS_SERVICES } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+const SERVICE_IMAGES: Record<string, string> = {
+  crossbite: 'https://images.unsplash.com/photo-1581939511501-4ec557ff0957?q=80&w=1170&auto=format&fit=crop',
+  adults: 'https://images.unsplash.com/photo-1489278353717-f64c6ee8a4d2?q=80&w=1170&auto=format&fit=crop',
+  gaps: 'https://images.pexels.com/photos/6502308/pexels-photo-6502308.jpeg',
+  overbite: 'https://images.pexels.com/photos/15073697/pexels-photo-15073697.jpeg',
+  crowded: 'https://images.unsplash.com/photo-1660732205543-dfef1a8761f7?q=80&w=1170&auto=format&fit=crop',
+  underbite: 'https://images.pexels.com/photos/3762402/pexels-photo-3762402.jpeg'
+};
+
 export default function ServiceCityPage({ params }: { params: { service: string; city: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -22,6 +31,8 @@ export default function ServiceCityPage({ params }: { params: { service: string;
   );
 
   if (!service || !cityName) notFound();
+
+  const heroImage = SERVICE_IMAGES[params.service] || SERVICE_IMAGES.adults;
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -62,8 +73,20 @@ export default function ServiceCityPage({ params }: { params: { service: string;
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      <div className="pt-32 pb-24 min-h-screen bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 space-y-16">
+      {/* Hero Section with Image */}
+      <div className="relative pt-32 pb-24 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage}
+            alt={`${service.title} in ${cityName}`}
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-16">
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
             <Link href="/services" className="hover:text-sky-400 transition-colors">Services</Link>
             <span>/</span>
@@ -75,7 +98,7 @@ export default function ServiceCityPage({ params }: { params: { service: string;
           </div>
 
           <div className="text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500/10 rounded-full border border-sky-500/20 text-sm text-sky-400">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500/10 rounded-full border border-sky-500/20 text-sm text-sky-400 backdrop-blur-sm">
               <MapPin className="w-4 h-4" />
               <span>Elite Providers in {cityName}</span>
             </div>
@@ -98,13 +121,18 @@ export default function ServiceCityPage({ params }: { params: { service: string;
               </button>
               <Link 
                 href={`/location/${params.city}`}
-                className="px-10 py-5 bg-white/5 text-white font-bold rounded-full border border-white/10 hover:border-sky-500/30 transition-all text-lg"
+                className="px-10 py-5 bg-white/5 text-white font-bold rounded-full border border-white/10 hover:border-sky-500/30 transition-all text-lg backdrop-blur-sm"
               >
                 View All {cityName} Treatments
               </Link>
             </div>
           </div>
+        </div>
+      </div>
 
+      {/* Rest of the page */}
+      <div className="pb-24 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 space-y-16">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, idx) => (
               <div key={idx} className="dark-card p-6 rounded-3xl border border-white/5">
