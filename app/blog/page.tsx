@@ -118,7 +118,8 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <Navigation />
+      <Navigation onOpenModal={() => setIsModalOpen(true)} />
+
 
       <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
