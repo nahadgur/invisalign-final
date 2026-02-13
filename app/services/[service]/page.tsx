@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useMemo } from 'react';
 import { Globe, ArrowUpRight, ChevronUp } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
@@ -7,12 +9,6 @@ import LeadFormModal from '@/components/LeadFormModal';
 import { LOCATIONS, SERVICES, FAQS_LOCATION } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-
-export function generateStaticParams() {
-  return SERVICES.map((service) => ({
-    service: service.id,
-  }));
-}
 
 export default function ServiceCitiesPage({ params }: { params: { service: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,7 +40,6 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
     return result;
   }, [searchQuery]);
 
-  // Get all cities as flat array for count
   const allCities = Object.values(LOCATIONS).flat();
 
   return (
@@ -61,7 +56,6 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
 
       <div className="pt-32 pb-24 min-h-screen bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 space-y-12">
-          {/* Header Section */}
           <div className="text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4">
               <Link href="/services" className="hover:text-sky-400 transition-colors">All Services</Link>
@@ -89,7 +83,6 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
             </div>
           </div>
 
-          {/* CTA Card */}
           <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-4 text-center md:text-left">
@@ -107,7 +100,6 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
             </div>
           </div>
           
-          {/* Cities Grid by Region */}
           <div className="flex flex-col gap-16 pt-8">
             {Object.entries(filteredLocations).map(([region, cities]) => (
               <div key={region}>
@@ -138,4 +130,10 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
       <Footer />
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  return SERVICES.map((service) => ({
+    service: service.id,
+  }));
 }
