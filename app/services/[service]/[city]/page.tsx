@@ -246,20 +246,3 @@ export default function ServiceCityPage({ params }: { params: { service: string;
     </div>
   );
 }
-
-export async function generateStaticParams() {
-  const params: { service: string; city: string }[] = [];
-  
-  SERVICES.forEach(service => {
-    Object.values(LOCATIONS).forEach(cities => {
-      cities.forEach(city => {
-        params.push({
-          service: service.id,
-          city: city.toLowerCase().replace(/\s+/g, '-')
-        });
-      });
-    });
-  });
-  
-  return params;
-}
