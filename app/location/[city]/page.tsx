@@ -134,17 +134,3 @@ export default function CityServicesPage({ params }: { params: { city: string } 
     </div>
   );
 }
-
-export async function generateStaticParams() {
-  const params: { city: string }[] = [];
-  
-  Object.values(LOCATIONS).forEach(cities => {
-    cities.forEach(city => {
-      params.push({
-        city: city.toLowerCase().replace(/\s+/g, '-')
-      });
-    });
-  });
-  
-  return params;
-}
