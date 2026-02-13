@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { CheckCircle, Clock, Shield, Award, MapPin, ChevronUp, Users } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
@@ -8,30 +10,12 @@ import { SERVICES, LOCATIONS, FAQS_SERVICES } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-export function generateStaticParams() {
-  const params: { service: string; city: string }[] = [];
-  
-  SERVICES.forEach(service => {
-    Object.values(LOCATIONS).forEach(cities => {
-      cities.forEach(city => {
-        params.push({
-          service: service.id,
-          city: city.toLowerCase().replace(/\s+/g, '-')
-        });
-      });
-    });
-  });
-  
-  return params;
-}
-
 export default function ServiceCityPage({ params }: { params: { service: string; city: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   const service = SERVICES.find(s => s.id === params.service);
   
-  // Find the actual city name from slug
   const allCities = Object.values(LOCATIONS).flat();
   const cityName = allCities.find(city => 
     city.toLowerCase().replace(/\s+/g, '-') === params.city
@@ -80,7 +64,6 @@ export default function ServiceCityPage({ params }: { params: { service: string;
 
       <div className="pt-32 pb-24 min-h-screen bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 space-y-16">
-          {/* Breadcrumb */}
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
             <Link href="/services" className="hover:text-sky-400 transition-colors">Services</Link>
             <span>/</span>
@@ -91,7 +74,6 @@ export default function ServiceCityPage({ params }: { params: { service: string;
             <span className="text-white">{cityName}</span>
           </div>
 
-          {/* Hero Section */}
           <div className="text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500/10 rounded-full border border-sky-500/20 text-sm text-sky-400">
               <MapPin className="w-4 h-4" />
@@ -123,7 +105,6 @@ export default function ServiceCityPage({ params }: { params: { service: string;
             </div>
           </div>
 
-          {/* Benefits Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, idx) => (
               <div key={idx} className="dark-card p-6 rounded-3xl border border-white/5">
@@ -136,7 +117,6 @@ export default function ServiceCityPage({ params }: { params: { service: string;
             ))}
           </div>
 
-          {/* Treatment Process */}
           <div className="dark-card p-10 md:p-14 rounded-[2.5rem] border border-white/5">
             <h2 className="text-3xl md:text-4xl font-black text-white mb-8 text-center">
               Your Treatment Journey in {cityName}
@@ -153,7 +133,6 @@ export default function ServiceCityPage({ params }: { params: { service: string;
             </div>
           </div>
 
-          {/* Why Choose Section */}
           <div className="grid md:grid-cols-2 gap-8">
             <div className="dark-card p-10 rounded-[2.5rem] border border-white/5">
               <h3 className="text-2xl font-black text-white mb-6">
@@ -218,7 +197,6 @@ export default function ServiceCityPage({ params }: { params: { service: string;
             </div>
           </div>
 
-          {/* Internal Links Section */}
           <div className="dark-card p-10 rounded-[2.5rem] border border-white/5">
             <div className="grid md:grid-cols-2 gap-8">
               <div>
@@ -267,4 +245,21 @@ export default function ServiceCityPage({ params }: { params: { service: string;
       <Footer />
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  const params: { service: string; city: string }[] = [];
+  
+  SERVICES.forEach(service => {
+    Object.values(LOCATIONS).forEach(cities => {
+      cities.forEach(city => {
+        params.push({
+          service: service.id,
+          city: city.toLowerCase().replace(/\s+/g, '-')
+        });
+      });
+    });
+  });
+  
+  return params;
 }
