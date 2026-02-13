@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { CheckCircle, Clock, Shield, Award, MapPin, ChevronUp, Users } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
