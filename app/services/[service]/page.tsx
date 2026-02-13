@@ -10,6 +10,15 @@ import { LOCATIONS, SERVICES, FAQS_LOCATION } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+const SERVICE_IMAGES: Record<string, string> = {
+  crossbite: 'https://images.unsplash.com/photo-1581939511501-4ec557ff0957?q=80&w=1170&auto=format&fit=crop',
+  adults: 'https://images.unsplash.com/photo-1489278353717-f64c6ee8a4d2?q=80&w=1170&auto=format&fit=crop',
+  gaps: 'https://images.pexels.com/photos/6502308/pexels-photo-6502308.jpeg',
+  overbite: 'https://images.pexels.com/photos/15073697/pexels-photo-15073697.jpeg',
+  crowded: 'https://images.unsplash.com/photo-1660732205543-dfef1a8761f7?q=80&w=1170&auto=format&fit=crop',
+  underbite: 'https://images.pexels.com/photos/3762402/pexels-photo-3762402.jpeg'
+};
+
 export default function ServiceCitiesPage({ params }: { params: { service: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -17,6 +26,8 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
 
   const service = SERVICES.find(s => s.id === params.service);
   if (!service) notFound();
+
+  const heroImage = SERVICE_IMAGES[params.service] || SERVICE_IMAGES.adults;
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -54,10 +65,22 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      <div className="pt-32 pb-24 min-h-screen bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 space-y-12">
+      {/* Hero Section with Image */}
+      <div className="relative pt-32 pb-24 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage}
+            alt={service.title}
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-12">
           <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4 backdrop-blur-sm">
               <Link href="/services" className="hover:text-sky-400 transition-colors">All Services</Link>
               <span>/</span>
               <span className="text-white">{service.title}</span>
@@ -78,12 +101,12 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
                 placeholder="Search your city or town..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 pl-16 text-white focus:border-sky-500 outline-none transition-all shadow-2xl"
+                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 pl-16 text-white focus:border-sky-500 outline-none transition-all shadow-2xl backdrop-blur-sm"
               />
             </div>
           </div>
 
-          <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5">
+          <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5 backdrop-blur-sm">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-4 text-center md:text-left">
                 <h2 className="text-3xl font-bold text-white">Ready to Start Your Treatment?</h2>
@@ -99,8 +122,13 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
               </button>
             </div>
           </div>
-          
-          <div className="flex flex-col gap-16 pt-8">
+        </div>
+      </div>
+
+      {/* Cities Grid */}
+      <div className="pb-24 bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col gap-16">
             {Object.entries(filteredLocations).map(([region, cities]) => (
               <div key={region}>
                 <h2 className="text-2xl font-black text-white mb-6 px-2">{region}</h2>
