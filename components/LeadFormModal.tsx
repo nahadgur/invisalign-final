@@ -31,19 +31,47 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
 
   if (!shouldRender) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    // Simulate lead generation
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  try {
+    const res = await fetch(
+      'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: (e.target as any)[0].value,
+          email: (e.target as any)[1].value,
+          location: (e.target as any)[2].value,
+          page: window.location.href,
+          source: "Website Lead"
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || "Submission failed");
+    }
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+
     setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        onClose();
-      }, 3500);
-    }, 1500);
-  };
+      setIsSuccess(false);
+      onClose();
+    }, 3000);
+
+  } catch (err) {
+    console.error(err);
+    setIsSubmitting(false);
+    alert("Something went wrong. Please try again.");
+  }
+};
+
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
