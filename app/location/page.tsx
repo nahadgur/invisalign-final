@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import FAQSection from '@/components/FAQSection';
 import LeadFormModal from '@/components/LeadFormModal';
 import { LOCATIONS, FAQS_LOCATION } from '@/lib/data';
+import Link from 'next/link';
 
 export default function LocationPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -97,24 +98,33 @@ export default function LocationPage() {
               <div key={region}>
                 <h2 className="text-2xl font-black text-white mb-6 px-2">{region}</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {cities.map(city => (
-                    <button 
-                      key={city} 
-                      onClick={() => handleCityClick(city)} 
-                      className={`text-left px-4 py-3.5 rounded-2xl border transition-all font-bold text-xs flex items-center justify-between group ${
-                        selectedCity === city 
-                          ? 'bg-sky-500/20 border-sky-500 text-sky-400 shadow-lg shadow-sky-500/5' 
-                          : 'bg-slate-900/40 border-white/5 text-slate-400 hover:border-sky-500/30 hover:text-white hover:bg-slate-800/40'
-                      }`}
-                    >
-                      <span>{city}</span>
-                      <ArrowUpRight className={`w-3 h-3 transition-transform ${
-                        selectedCity === city 
-                          ? 'opacity-100' 
-                          : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5'
-                      }`} />
-                    </button>
-                  ))}
+                  {cities.map(city => {
+                    const citySlug = city.toLowerCase().replace(/\s+/g, '-');
+                    return (
+                      <Link 
+                        key={city}
+                        href={`/location/${citySlug}`}
+                        className={`text-left px-4 py-3.5 rounded-2xl border transition-all font-bold text-xs flex items-center justify-between group ${
+                          selectedCity === city 
+                            ? 'bg-sky-500/20 border-sky-500 text-sky-400 shadow-lg shadow-sky-500/5' 
+                            : 'bg-slate-900/40 border-white/5 text-slate-400 hover:border-sky-500/30 hover:text-white hover:bg-slate-800/40'
+                        }`}
+                        onClick={(e) => {
+                          if (selectedCity === city) {
+                            e.preventDefault();
+                            handleCityClick(city);
+                          }
+                        }}
+                      >
+                        <span>{city}</span>
+                        <ArrowUpRight className={`w-3 h-3 transition-transform ${
+                          selectedCity === city 
+                            ? 'opacity-100' 
+                            : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5'
+                        }`} />
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ))}
