@@ -161,7 +161,7 @@ const filteredPosts = useMemo(() => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      <Navigation onOpenModal={() => setIsModalOpen(true)} />
+      < onOpenModal={() => setIsModalOpen(true)} />
 
       <button
         onClick={scrollToTop}
