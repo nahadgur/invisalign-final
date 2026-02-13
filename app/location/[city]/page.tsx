@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { Users, Sparkles, Shield, Medal, Globe, User, ArrowUpRight, ChevronUp, MapPin } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
