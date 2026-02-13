@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Users, Sparkles, Shield, Medal, Globe, User, ArrowUpRight, ChevronUp, MapPin } from '@/components/Icons';
 import Navigation from '@/components/Navigation';
@@ -8,25 +10,10 @@ import { SERVICES, LOCATIONS, FAQS_SERVICES } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-export function generateStaticParams() {
-  const params: { city: string }[] = [];
-  
-  Object.values(LOCATIONS).forEach(cities => {
-    cities.forEach(city => {
-      params.push({
-        city: city.toLowerCase().replace(/\s+/g, '-')
-      });
-    });
-  });
-  
-  return params;
-}
-
 export default function CityServicesPage({ params }: { params: { city: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Find the actual city name from slug
   const allCities = Object.values(LOCATIONS).flat();
   const cityName = allCities.find(city => 
     city.toLowerCase().replace(/\s+/g, '-') === params.city
@@ -70,7 +57,6 @@ export default function CityServicesPage({ params }: { params: { city: string } 
 
       <div className="pt-32 pb-24 min-h-screen bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 space-y-16">
-          {/* Header Section */}
           <div className="text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4">
               <Link href="/location" className="hover:text-sky-400 transition-colors">All Locations</Link>
@@ -94,7 +80,6 @@ export default function CityServicesPage({ params }: { params: { city: string } 
             </p>
           </div>
 
-          {/* CTA Card */}
           <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="space-y-4 text-center md:text-left">
@@ -112,7 +97,6 @@ export default function CityServicesPage({ params }: { params: { city: string } 
             </div>
           </div>
           
-          {/* Services Grid */}
           <div>
             <h2 className="text-3xl font-black text-white mb-8 text-center">
               Available Treatments in {cityName}
@@ -149,4 +133,18 @@ export default function CityServicesPage({ params }: { params: { city: string } 
       <Footer />
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  const params: { city: string }[] = [];
+  
+  Object.values(LOCATIONS).forEach(cities => {
+    cities.forEach(city => {
+      params.push({
+        city: city.toLowerCase().replace(/\s+/g, '-')
+      });
+    });
+  });
+  
+  return params;
 }
