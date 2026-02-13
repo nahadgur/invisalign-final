@@ -131,9 +131,3 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
     </div>
   );
 }
-
-export async function generateStaticParams() {
-  return SERVICES.map((service) => ({
-    service: service.id,
-  }));
-}
