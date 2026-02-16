@@ -55,7 +55,7 @@ export const BLOG_POSTS = [
       "Proper maintenance of your Invisalign aligners is crucial not just for hygiene, but for the success of your entire treatment. Clean aligners mean better aesthetics and healthier teeth throughout your journey.",
       "The golden rule: never use hot water on your aligners. Heat can warp the precise shape that's been calculated for your teeth movement. Always use lukewarm or cold water for rinsing and cleaning.",
       "We recommend a twice-daily cleaning routine. Each morning and evening, gently brush your aligners with a soft toothbrush and clear, antibacterial soap. Avoid toothpaste as the abrasive particles can create tiny scratches that harbor bacteria.",
-      "For deep cleaning once a week, soak your aligners in a specialized cleaning solution or a mixture of water and white vinegar for 15-20 minutes. This removes buildup and keeps them crystal clear."
+      "For deep cleaning once a week, soak your aligners in a specialised cleaning solution or a mixture of water and white vinegar for 15-20 minutes. This removes buildup and keeps them crystal clear."
     ],
     date: "February 25, 2024",
     category: "Patient Guide",
@@ -71,7 +71,7 @@ export const BLOG_POSTS = [
       "It's one of the most common frustrations we hear: 'I had braces as a teenager, why are my teeth crooked again?' Orthodontic relapse is surprisingly common, affecting up to 70% of people who don't wear their retainers consistently.",
       "The good news? Invisalign Lite and Express packages are specifically designed for these minor corrections. These shorter treatment plans typically range from 3-7 months, making them perfect for adults dealing with mild relapse.",
       "Unlike going through a full course of traditional braces again, Invisalign allows you to correct the shift discreetly. Most colleagues and friends won't even notice you're undergoing treatment.",
-      "Our Platinum providers specialize in these 'refinement' cases. They understand the nuances of adult teeth movement and can create a treatment plan that respects your lifestyle while achieving the results you want."
+      "Our Platinum providers specialise in these 'refinement' cases. They understand the nuances of adult teeth movement and can create a treatment plan that respects your lifestyle while achieving the results you want."
     ],
     date: "February 18, 2024",
     category: "Specialist Info",
@@ -207,7 +207,7 @@ export const SERVICES = [
 ];
 
 export const FAQS_HOME = [
-  { q: "How does this service differ from a normal dentist?", a: "We are an independent referral network focusing on Platinum tier providers. We prioritize matching you with clinical experts who handle thousands of cases annually. This ensures you receive the highest standard of specialized care." },
+  { q: "How does this service differ from a normal dentist?", a: "We are an independent referral network focusing on Platinum tier providers. We prioritise matching you with clinical experts who handle thousands of cases annually. This ensures you receive the highest standard of specialised care." },
   { q: "How do I get matched with the right provider?", a: "Our matching service is completely free and takes less than 2 minutes. Simply complete our quick form with your requirements and location, and we'll connect you with vetted Invisalign specialists in your area. We only work with experienced providers who meet our quality standards." },
   { q: "Is there a cost for the referral?", a: "Our referral facilitation service is completely free for patients. We help you find the perfect match and arrange your initial consultation at no charge. You only pay the clinic directly if you choose to proceed with treatment." }
 ];
