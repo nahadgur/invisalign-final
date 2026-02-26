@@ -1,195 +1,192 @@
+
 'use client';
 
-import React, { useState } from 'react';
-import { CheckCircle } from './Icons';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, X } from './Icons';
 
-interface HeroLeadFormProps {
-  city?: string;
-  service?: string;
+interface LeadFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const TREATMENTS = [
-  'Invisalign for Crowded Teeth',
-  'Invisalign for Gaps',
-  'Invisalign for Overbite',
-  'Invisalign for Underbite',
-  'Invisalign for Crossbite',
-  'Invisalign for Adults',
-];
-
-const GOOGLE_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec';
-
-const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
+const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    location: city || '',
-    treatment: service || '',
-  });
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const [animationState, setAnimationState] = useState<'idle' | 'entering' | 'exiting'>('idle');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        location: formData.location || city || '',
-        treatment: formData.treatment || service || '',
-        page: window.location.href,
-        source: 'Invisalign Dentists',
-      };
-
-      // Do NOT set Content-Type header — avoids CORS preflight with Google Apps Script
-      const res = await fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-
-      const text = await res.text();
-      let data: { ok?: boolean; error?: string } = {};
-      try { data = JSON.parse(text); } catch { /* non-JSON response is OK */ }
-
-      if (data && data.ok === false) {
-        throw new Error(data.error || 'Submission failed');
-      }
-
-      setIsSubmitting(false);
-      setIsSuccess(true);
-    } catch (err) {
-      console.error(err);
-      setIsSubmitting(false);
-      alert('Something went wrong. Please try again.');
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      setAnimationState('entering');
+    } else if (shouldRender) {
+      setAnimationState('exiting');
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+        setAnimationState('idle');
+      }, 300); // Match exit animation duration
+      return () => clearTimeout(timer);
     }
-  };
+  }, [isOpen]);
 
-  if (isSuccess) {
-    return (
-      <div className="bg-white rounded-[2rem] p-8 shadow-2xl flex flex-col items-center justify-center text-center gap-6 min-h-[340px]">
-        <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10">
-          <CheckCircle className="w-12 h-12" />
-        </div>
-        <div>
-          <h3 className="text-2xl font-black text-slate-900 mb-2">Request Received!</h3>
-          <p className="text-slate-500 font-medium">
-            We&apos;ve matched you with a Platinum Partner{city ? ` in ${city}` : ''}. Check your email for next steps.
-          </p>
-        </div>
-      </div>
+  if (!shouldRender) return null;
+
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  try {
+    const form = e.currentTarget;
+    const fullName = (form.elements[0] as HTMLInputElement).value;
+    const email = (form.elements[1] as HTMLInputElement).value;
+    const location = (form.elements[2] as HTMLInputElement).value;
+
+    const payload = {
+      fullName,
+      email,
+      location,
+      page: window.location.href,
+      source: "Invisalign Dentists",
+    };
+
+    const res = await fetch(
+      'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec',
+      {
+        method: 'POST',
+        // IMPORTANT: do NOT set Content-Type: application/json (causes CORS preflight)
+        body: JSON.stringify(payload),
+      }
     );
+
+    // Apps Script sometimes returns text; parse safely
+    const text = await res.text();
+    let data: any = {};
+    try { data = JSON.parse(text); } catch {}
+
+    if (data && data.ok === false) {
+      throw new Error(data.error || 'Submission failed');
+    }
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+
+    setTimeout(() => {
+      setIsSuccess(false);
+      onClose();
+    }, 3000);
+  } catch (err) {
+    console.error(err);
+    setIsSubmitting(false);
+    alert("Something went wrong. Please try again.");
   }
+};
+
+
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
 
   return (
-    <div className="bg-white rounded-[2rem] p-8 shadow-2xl">
-      <div className="mb-6">
-        <div className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-[10px] font-black uppercase tracking-widest rounded-full mb-3">
-          Free Matching Service
-        </div>
-        <h3 className="text-2xl font-black text-slate-900 leading-tight">
-          Get Matched{city ? ` in ${city}` : ''}
-        </h3>
-        <p className="text-slate-500 text-sm mt-1 font-medium">
-          Top local clinics will contact you within 2 hours
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          required
-          name="fullName"
-          type="text"
-          value={formData.fullName}
-          onChange={handleChange}
-          placeholder="Full Name *"
-          className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            required
-            name="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="Phone Number *"
-            className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-          />
-          <input
-            required
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email Address *"
-            className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-          />
-        </div>
-
-        <select
-          required
-          name="treatment"
-          value={formData.treatment}
-          onChange={handleChange}
-          className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all text-sm font-medium"
+    <div 
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md 
+        ${animationState === 'entering' ? 'animate-backdrop-in' : animationState === 'exiting' ? 'animate-backdrop-out' : 'opacity-100'}`}
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className={`relative w-full max-w-lg overflow-hidden bg-white rounded-[2.5rem] shadow-[0_48px_96px_-12px_rgba(0,0,0,0.9)] 
+          ${animationState === 'entering' ? 'animate-modal-in' : 'animate-modal-out'}`}
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-6 right-6 p-2 text-slate-300 hover:text-slate-500 hover:bg-slate-50 rounded-full transition-all z-10"
+          aria-label="Close modal"
         >
-          <option value="" disabled>Select Treatment *</option>
-          {TREATMENTS.map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-
-        {!city && (
-          <input
-            required
-            name="location"
-            type="text"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="Your City / Location *"
-            className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-          />
-        )}
-
-        <button
-          disabled={isSubmitting}
-          type="submit"
-          className="w-full py-4 bg-sky-500 hover:bg-sky-600 disabled:opacity-70 text-white font-black text-base rounded-xl shadow-lg shadow-sky-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 relative overflow-hidden group/btn"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-          {isSubmitting ? (
-            <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <>Get 3 Free Quotes →</>
-          )}
+          <X className="w-6 h-6" />
         </button>
 
-        <div className="flex items-center justify-center gap-4 pt-1">
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            100% Free
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            No Spam
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            2hr Response
-          </span>
+        <div className="p-8 md:p-12">
+          {isSuccess ? (
+            <div className="flex flex-col items-center text-center py-12 space-y-6">
+              <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                <CheckCircle className="w-14 h-14" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-black text-slate-900 mb-2">Request Received</h2>
+                <p className="text-slate-500 font-medium leading-relaxed">
+                  We've successfully matched you with a Platinum Partner in your area. Check your email for next steps.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-8">
+                <div className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-[10px] font-black uppercase tracking-widest rounded-full mb-3 shadow-sm shadow-sky-100">
+                  Priority Referral
+                </div>
+                <h2 className="text-3xl font-black text-slate-900 leading-tight">Start Your Smile Journey</h2>
+                <p className="text-slate-500 mt-2 font-medium">
+                  Complete the form to get matched with vetted Invisalign specialists in your area.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-1.5 group">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-sky-500 transition-colors">Full Name</label>
+                  <input 
+                    required 
+                    type="text" 
+                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-8 focus:ring-sky-400/5 outline-none transition-all placeholder:text-slate-300" 
+                    placeholder="E.g. Alexander Hamilton" 
+                  />
+                </div>
+                <div className="space-y-1.5 group">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-sky-500 transition-colors">Email Address</label>
+                  <input 
+                    required 
+                    type="email" 
+                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-8 focus:ring-sky-400/5 outline-none transition-all placeholder:text-slate-300" 
+                    placeholder="alex@example.com" 
+                  />
+                </div>
+                <div className="space-y-1.5 group">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-sky-500 transition-colors">Your City / Location</label>
+                  <input 
+                    required 
+                    type="text" 
+                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-8 focus:ring-sky-400/5 outline-none transition-all placeholder:text-slate-300" 
+                    placeholder="e.g. Manchester, UK" 
+                  />
+                </div>
+                
+                <button 
+                  disabled={isSubmitting}
+                  type="submit" 
+                  className="w-full py-5 mt-4 bg-sky-500 hover:bg-sky-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-sky-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></div>
+                  {isSubmitting ? (
+                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      Verify Availability
+                      <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </>
+                  )}
+                </button>
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                    facilitator service • free initial consultation
+                  </p>
+                </div>
+              </form>
+            </>
+          )}
         </div>
-      </form>
+      </div>
     </div>
   );
 };
 
-export default HeroLeadForm;
+export default LeadFormModal;
