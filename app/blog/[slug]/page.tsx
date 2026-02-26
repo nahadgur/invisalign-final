@@ -196,30 +196,37 @@ const splitHtmlAfterFirstH2Section = (html: string): [string, string] => {
 
 function BlogCtaBanner({ onOpenModal }: { onOpenModal: () => void }) {
   return (
-    <div className="my-10 rounded-3xl overflow-hidden border border-sky-500/30 bg-gradient-to-br from-sky-950/60 via-slate-900 to-slate-950 shadow-2xl">
-      <div className="px-8 py-10 md:px-12 md:py-12 flex flex-col md:flex-row items-center gap-8">
-        <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-3xl">
-          😁
+    <div className="my-10 rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-r from-slate-900 to-slate-900/80 shadow-2xl relative">
+      {/* Decorative accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-sky-500 via-sky-400 to-transparent" />
+      <div className="px-8 py-10 md:px-12 md:py-10 flex flex-col md:flex-row items-center gap-8">
+        {/* Icon */}
+        <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-sky-500/15 flex items-center justify-center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-sky-400">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
         </div>
+        {/* Text */}
         <div className="flex-1 text-center md:text-left">
-          <p className="text-xs font-black uppercase tracking-widest text-sky-400 mb-2">
+          <p className="text-[11px] font-black uppercase tracking-widest text-sky-400 mb-1.5">
             Free Consultation
           </p>
-          <h3 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2">
+          <h3 className="text-xl md:text-2xl font-black text-white leading-snug mb-1.5">
             Ready to Start Your Invisalign Journey?
           </h3>
-          <p className="text-slate-300 font-medium leading-relaxed">
-            Book your free consultation with our specialist providers today. No obligation — just honest advice tailored to you.
+          <p className="text-slate-400 text-sm font-medium leading-relaxed">
+            Get matched with a specialist provider near you. No obligation, no cost.
           </p>
         </div>
+        {/* CTA */}
         <div className="flex-shrink-0">
           <button
             onClick={onOpenModal}
-            className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg shadow-sky-500/30 hover:scale-105 active:scale-95 whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-black text-sm tracking-wide transition-all duration-200 shadow-lg shadow-sky-500/25 hover:shadow-sky-400/30 hover:scale-105 active:scale-95 whitespace-nowrap"
           >
             Book Free Consultation
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </button>
         </div>
