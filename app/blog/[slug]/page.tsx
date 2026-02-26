@@ -161,6 +161,74 @@ const pickFurtherReading = (key: string, count: number = 3): ReadingLink[] => {
 };
 
 /* =======================
+   CTA BANNER INJECTION
+======================= */
+
+const splitHtmlAfterFirstH2Section = (html: string): [string, string] => {
+  if (!html) return ['', ''];
+
+  // Strategy 1: split before the 2nd heading after the 1st h2
+  const firstH2Match = html.match(/<h2[\s>]/i);
+  if (firstH2Match && firstH2Match.index !== undefined) {
+    const afterFirstH2 = html.slice(firstH2Match.index + firstH2Match[0].length);
+    const nextHeadingMatch = afterFirstH2.match(/<h[23][\s>]/i);
+    if (nextHeadingMatch && nextHeadingMatch.index !== undefined) {
+      const splitPoint = firstH2Match.index + firstH2Match[0].length + nextHeadingMatch.index;
+      return [html.slice(0, splitPoint), html.slice(splitPoint)];
+    }
+  }
+
+  // Strategy 2: fallback — split after the 3rd closing </p> tag
+  let count = 0;
+  let pos = 0;
+  while (pos < html.length && count < 3) {
+    const idx = html.indexOf('</p>', pos);
+    if (idx === -1) break;
+    pos = idx + 4;
+    count++;
+  }
+  if (count >= 3 && pos < html.length) {
+    return [html.slice(0, pos), html.slice(pos)];
+  }
+
+  return [html, ''];
+};
+
+function BlogCtaBanner({ onOpenModal }: { onOpenModal: () => void }) {
+  return (
+    <div className="my-10 rounded-3xl overflow-hidden border border-sky-500/30 bg-gradient-to-br from-sky-950/60 via-slate-900 to-slate-950 shadow-2xl">
+      <div className="px-8 py-10 md:px-12 md:py-12 flex flex-col md:flex-row items-center gap-8">
+        <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-3xl">
+          😁
+        </div>
+        <div className="flex-1 text-center md:text-left">
+          <p className="text-xs font-black uppercase tracking-widest text-sky-400 mb-2">
+            Free Consultation
+          </p>
+          <h3 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2">
+            Ready to Start Your Invisalign Journey?
+          </h3>
+          <p className="text-slate-300 font-medium leading-relaxed">
+            Book your free consultation with our specialist providers today. No obligation — just honest advice tailored to you.
+          </p>
+        </div>
+        <div className="flex-shrink-0">
+          <button
+            onClick={onOpenModal}
+            className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg shadow-sky-500/30 hover:scale-105 active:scale-95 whitespace-nowrap"
+          >
+            Book Free Consultation
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 17L17 7" /><path d="M7 7h10v10" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =======================
    PAGE
 ======================= */
 
@@ -217,7 +285,7 @@ export default function ArticlePage() {
 
                 const images = extractImageUrls(a['Article Content']);
                 const featuredImage =
-                  images.length > 0 ? images[images.length - 1] : undefined;
+                  images.length > 0 ? images[0] : undefined;
 
                 return {
                   ...a,
