@@ -7,6 +7,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import FAQSection from '@/components/FAQSection';
 import LeadFormModal from '@/components/LeadFormModal';
+import HeroLeadForm from '@/components/HeroLeadForm';
 import { LOCATIONS, SERVICES, FAQS_LOCATION } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -40,8 +41,7 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const filteredLocations = useMemo(() => {
     if (!searchQuery) return LOCATIONS;
@@ -59,11 +59,7 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
-      <LeadFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-
+      <LeadFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <Navigation onOpenModal={() => setIsModalOpen(true)} />
 
       <button
@@ -89,60 +85,40 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 space-y-12">
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-4 backdrop-blur-sm">
-              <Link
-                href="/services"
-                className="hover:text-sky-400 transition-colors"
-              >
-                All Services
-              </Link>
-              <span>/</span>
-              <span className="text-white">{service.title}</span>
-            </div>
-
-            <h1 className="text-4xl md:text-7xl font-black text-white leading-tight tracking-tight">
-              {service.title} in{' '}
-              <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">
-                {allCities.length}+ UK Locations
-              </span>
-            </h1>
-
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
-              {service.desc} Find Platinum providers near you.
-            </p>
-
-            <div className="max-w-xl mx-auto relative mt-8 flex items-center">
-              <Globe className="absolute left-6 text-slate-500 w-6 h-6 z-10" />
-              <input
-                type="text"
-                placeholder="Search your city or town..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 pl-16 text-white focus:border-sky-500 outline-none transition-all shadow-2xl backdrop-blur-sm"
-              />
-            </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm text-slate-400 mb-8 backdrop-blur-sm">
+            <Link href="/services" className="hover:text-sky-400 transition-colors">All Services</Link>
+            <span>/</span>
+            <span className="text-white">{service.title}</span>
           </div>
 
-          <div className="dark-card p-8 md:p-12 rounded-[2.5rem] border border-sky-500/20 bg-sky-500/5 backdrop-blur-sm">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="space-y-4 text-center md:text-left">
-                <h2 className="text-3xl font-bold text-white">
-                  Ready to Start Your Treatment?
-                </h2>
-                <p className="text-slate-400 max-w-xl font-medium">
-                  Connect with elite Platinum providers specializing in{' '}
-                  {service.title.toLowerCase()}.
-                </p>
-              </div>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <h1 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight">
+                {service.title} in{' '}
+                <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">
+                  {allCities.length}+ UK Locations
+                </span>
+              </h1>
 
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-10 py-5 bg-sky-500 text-white font-black rounded-full shadow-2xl hover:scale-105 transition-all whitespace-nowrap"
-              >
-                Get Matched
-              </button>
+              <p className="text-xl text-slate-400 font-medium leading-relaxed">
+                {service.desc} Find Platinum providers near you.
+              </p>
+
+              <div className="relative flex items-center">
+                <Globe className="absolute left-6 text-slate-500 w-6 h-6 z-10" />
+                <input
+                  type="text"
+                  placeholder="Search your city or town..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900/50 border border-white/10 rounded-2xl px-6 py-5 pl-16 text-white focus:border-sky-500 outline-none transition-all shadow-2xl backdrop-blur-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <HeroLeadForm service={service.title} />
             </div>
           </div>
         </div>
@@ -154,16 +130,10 @@ export default function ServiceCitiesPage({ params }: { params: { service: strin
           <div className="flex flex-col gap-16">
             {Object.entries(filteredLocations).map(([region, cities]) => (
               <div key={region}>
-                <h2 className="text-2xl font-black text-white mb-6 px-2">
-                  {region}
-                </h2>
-
+                <h2 className="text-2xl font-black text-white mb-6 px-2">{region}</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {cities.map(city => {
-                    const citySlug = city
-                      .toLowerCase()
-                      .replace(/\s+/g, '-');
-
+                    const citySlug = city.toLowerCase().replace(/\s+/g, '-');
                     return (
                       <Link
                         key={city}
