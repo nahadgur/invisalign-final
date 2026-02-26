@@ -310,50 +310,45 @@ export default function ArticlePage() {
             </div>
           </div>
 
-          <div
-            className={[
+          {(() => {
+            const articleClasses = [
               'p-10 max-w-none',
-              // Headings
               '[&_h1]:text-4xl [&_h1]:md:text-5xl [&_h1]:font-black [&_h1]:tracking-tight [&_h1]:text-white [&_h1]:mt-10 [&_h1]:mb-5',
               '[&_h2]:text-3xl [&_h2]:md:text-4xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:text-white [&_h2]:mt-10 [&_h2]:mb-4',
               '[&_h3]:text-2xl [&_h3]:md:text-3xl [&_h3]:font-black [&_h3]:tracking-tight [&_h3]:text-white [&_h3]:mt-8 [&_h3]:mb-3',
               '[&_h4]:text-xl [&_h4]:font-black [&_h4]:text-white [&_h4]:mt-7 [&_h4]:mb-3',
-
-              // Paragraphs
               '[&_p]:text-slate-300 [&_p]:font-medium [&_p]:leading-relaxed [&_p]:mb-5',
-
-              // Links
               '[&_a]:text-sky-400 [&_a]:font-black [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-300',
-
-              // Lists
-              // Ensure bullets/numbering are visible + nicely spaced
               '[&_ul]:my-6 [&_ul]:pl-7 [&_ul]:list-disc [&_ul]:list-outside [&_ul]:space-y-3 [&_ul]:text-slate-300 [&_ul]:font-medium',
               '[&_ol]:my-6 [&_ol]:pl-7 [&_ol]:list-decimal [&_ol]:list-outside [&_ol]:space-y-3 [&_ol]:text-slate-300 [&_ol]:font-medium',
               '[&_li]:leading-relaxed [&_li]:pl-1 [&_li]:marker:text-sky-400',
-
-              // Blockquotes
               '[&_blockquote]:my-8 [&_blockquote]:rounded-3xl [&_blockquote]:border [&_blockquote]:border-white/10 [&_blockquote]:bg-white/5 [&_blockquote]:p-6 [&_blockquote]:text-slate-200 [&_blockquote]:font-medium',
               '[&_blockquote_p]:mb-0',
-
-              // Horizontal rules
               '[&_hr]:my-10 [&_hr]:border-white/10',
-
-              // Images
               '[&_img]:w-full [&_img]:h-auto [&_img]:rounded-3xl [&_img]:border [&_img]:border-white/10 [&_img]:shadow-2xl [&_img]:my-8',
-
-              // Tables
               '[&_table]:w-full [&_table]:my-10 [&_table]:overflow-hidden [&_table]:rounded-3xl [&_table]:border [&_table]:border-white/10 [&_table]:bg-white/5 [&_table]:shadow-2xl',
               '[&_thead]:bg-white/10',
               '[&_th]:text-left [&_th]:px-5 [&_th]:py-4 [&_th]:text-white [&_th]:text-sm [&_th]:font-black [&_th]:tracking-wide',
               '[&_td]:px-5 [&_td]:py-4 [&_td]:text-slate-200 [&_td]:text-sm [&_td]:font-medium [&_td]:border-t [&_td]:border-white/10',
               'hover:[&_tbody_tr]:bg-white/5',
-
-              // Code
               '[&_code]:px-2 [&_code]:py-1 [&_code]:rounded-lg [&_code]:bg-white/10 [&_code]:text-slate-100 [&_code]:text-[0.95em]',
               '[&_pre]:my-8 [&_pre]:p-6 [&_pre]:rounded-3xl [&_pre]:bg-white/5 [&_pre]:border [&_pre]:border-white/10 [&_pre]:overflow-x-auto',
-            ].join(' ')}
-            dangerouslySetInnerHTML={{ __html: article.cleanedHtml || '' }}
-          />
+            ].join(' ');
+
+            const [htmlBefore, htmlAfter] = splitHtmlAfterFirstH2Section(article.cleanedHtml || '');
+
+            return htmlAfter ? (
+              <>
+                <div className={articleClasses} dangerouslySetInnerHTML={{ __html: htmlBefore }} />
+                <div className="px-10 pb-2">
+                  <BlogCtaBanner onOpenModal={() => setIsModalOpen(true)} />
+                </div>
+                <div className={articleClasses} dangerouslySetInnerHTML={{ __html: htmlAfter }} />
+              </>
+            ) : (
+              <div className={articleClasses} dangerouslySetInnerHTML={{ __html: article.cleanedHtml || '' }} />
+            );
+          })()}
         </div>
 
         {relatedArticles.length > 0 && (
