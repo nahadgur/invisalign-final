@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { CheckCircle } from './Icons';
+import { useState } from 'react';
+import { CheckCircle } from 'lucide-react';
 
 interface HeroLeadFormProps {
   city?: string;
@@ -20,7 +20,7 @@ const TREATMENTS = [
 const GOOGLE_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec';
 
-const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
+export function HeroLeadForm({ city, service }: HeroLeadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -38,7 +38,6 @@ const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const payload = {
         fullName: formData.fullName,
@@ -50,7 +49,6 @@ const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
         source: 'Invisalign Dentists',
       };
 
-      // Do NOT set Content-Type header — avoids CORS preflight with Google Apps Script
       const res = await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -58,11 +56,9 @@ const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
 
       const text = await res.text();
       let data: { ok?: boolean; error?: string } = {};
-      try { data = JSON.parse(text); } catch { /* non-JSON response is OK */ }
+      try { data = JSON.parse(text); } catch {}
 
-      if (data && data.ok === false) {
-        throw new Error(data.error || 'Submission failed');
-      }
+      if (data && data.ok === false) throw new Error(data.error || 'Submission failed');
 
       setIsSubmitting(false);
       setIsSuccess(true);
@@ -73,75 +69,46 @@ const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
     }
   };
 
+  const inputClass =
+    "w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition";
+
   if (isSuccess) {
     return (
-      <div className="bg-white rounded-[2rem] p-8 shadow-2xl flex flex-col items-center justify-center text-center gap-6 min-h-[340px]">
-        <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10">
-          <CheckCircle className="w-12 h-12" />
+      <div className="bg-white text-gray-900 rounded-2xl p-8 shadow-2xl border border-gray-100 flex flex-col items-center justify-center text-center gap-4 min-h-[340px]">
+        <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center">
+          <CheckCircle className="w-10 h-10" />
         </div>
-        <div>
-          <h3 className="text-2xl font-black text-slate-900 mb-2">Request Received!</h3>
-          <p className="text-slate-500 font-medium">
-            We&apos;ve matched you with a Platinum Partner{city ? ` in ${city}` : ''}. Check your email for next steps.
-          </p>
-        </div>
+        <h3 className="text-2xl font-display font-bold">Request Received!</h3>
+        <p className="text-gray-600">
+          We&apos;ve matched you with a Platinum Partner{city ? ` in ${city}` : ''}. Check your email for next steps.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-[2rem] p-8 shadow-2xl">
+    <div className="bg-white text-gray-900 rounded-2xl p-6 md:p-8 shadow-2xl border border-gray-100">
       <div className="mb-6">
-        <div className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-[10px] font-black uppercase tracking-widest rounded-full mb-3">
+        <span className="inline-block px-3 py-1 bg-brand-50 text-brand-600 text-xs font-bold uppercase tracking-wider rounded-full mb-3">
           Free Matching Service
-        </div>
-        <h3 className="text-2xl font-black text-slate-900 leading-tight">
+        </span>
+        <h3 className="text-2xl font-display font-bold leading-tight">
           Get Matched{city ? ` in ${city}` : ''}
         </h3>
-        <p className="text-slate-500 text-sm mt-1 font-medium">
+        <p className="text-gray-600 text-sm mt-1">
           Top local clinics will contact you within 2 hours
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          required
-          name="fullName"
-          type="text"
-          value={formData.fullName}
-          onChange={handleChange}
-          placeholder="Full Name *"
-          className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-        />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <input required name="fullName" type="text" value={formData.fullName} onChange={handleChange} placeholder="Full Name *" className={inputClass} />
 
         <div className="grid grid-cols-2 gap-3">
-          <input
-            required
-            name="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="Phone Number *"
-            className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-          />
-          <input
-            required
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email Address *"
-            className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-          />
+          <input required name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="Phone Number *" className={inputClass} />
+          <input required name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email Address *" className={inputClass} />
         </div>
 
-        <select
-          required
-          name="treatment"
-          value={formData.treatment}
-          onChange={handleChange}
-          className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all text-sm font-medium"
-        >
+        <select required name="treatment" value={formData.treatment} onChange={handleChange} className={inputClass + " appearance-none cursor-pointer"}>
           <option value="" disabled>Select Treatment *</option>
           {TREATMENTS.map(t => (
             <option key={t} value={t}>{t}</option>
@@ -149,47 +116,26 @@ const HeroLeadForm: React.FC<HeroLeadFormProps> = ({ city, service }) => {
         </select>
 
         {!city && (
-          <input
-            required
-            name="location"
-            type="text"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="Your City / Location *"
-            className="w-full px-4 py-3.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10 outline-none transition-all placeholder:text-slate-400 text-sm font-medium"
-          />
+          <input required name="location" type="text" value={formData.location} onChange={handleChange} placeholder="Your City / Location *" className={inputClass} />
         )}
 
         <button
           disabled={isSubmitting}
           type="submit"
-          className="w-full py-4 bg-sky-500 hover:bg-sky-600 disabled:opacity-70 text-white font-black text-base rounded-xl shadow-lg shadow-sky-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 relative overflow-hidden group/btn"
+          className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-semibold py-3 px-6 rounded-xl transition-colors text-sm mt-1"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-          {isSubmitting ? (
-            <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <>Get 3 Free Quotes →</>
-          )}
+          {isSubmitting ? 'Sending…' : 'Get 3 Free Quotes →'}
         </button>
 
         <div className="flex items-center justify-center gap-4 pt-1">
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            100% Free
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            No Spam
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-            2hr Response
-          </span>
+          {['100% Free', 'No Spam', '2hr Response'].map(item => (
+            <span key={item} className="flex items-center gap-1 text-xs text-green-600 font-medium">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              {item}
+            </span>
+          ))}
         </div>
       </form>
     </div>
   );
-};
-
-export default HeroLeadForm;
+}
