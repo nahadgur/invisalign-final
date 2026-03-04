@@ -1,15 +1,17 @@
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, X } from './Icons';
+import { useState, useEffect } from 'react';
+import { CheckCircle, X } from 'lucide-react';
 
 interface LeadFormModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
+const GOOGLE_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec';
+
+export function LeadFormModal({ isOpen, onClose }: LeadFormModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -24,162 +26,111 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ isOpen, onClose }) => {
       const timer = setTimeout(() => {
         setShouldRender(false);
         setAnimationState('idle');
-      }, 300); // Match exit animation duration
+      }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, shouldRender]);
 
   if (!shouldRender) return null;
 
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const form = e.currentTarget;
+      const fullName = (form.elements[0] as HTMLInputElement).value;
+      const email = (form.elements[1] as HTMLInputElement).value;
+      const location = (form.elements[2] as HTMLInputElement).value;
 
-  try {
-    const form = e.currentTarget;
-    const fullName = (form.elements[0] as HTMLInputElement).value;
-    const email = (form.elements[1] as HTMLInputElement).value;
-    const location = (form.elements[2] as HTMLInputElement).value;
+      const payload = {
+        fullName,
+        email,
+        location,
+        page: window.location.href,
+        source: 'Invisalign Dentists',
+      };
 
-    const payload = {
-      fullName,
-      email,
-      location,
-      page: window.location.href,
-      source: "Invisalign Dentists",
-    };
-
-    const res = await fetch(
-      'https://script.google.com/macros/s/AKfycbz-B9H0JTI7a9Cgyn9z-pZXKnuiNm6acAn8Zb13N21qGRcpxy7EtVvlPAjpl6f7Hj3-RQ/exec',
-      {
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        // IMPORTANT: do NOT set Content-Type: application/json (causes CORS preflight)
         body: JSON.stringify(payload),
-      }
-    );
+      });
 
-    // Apps Script sometimes returns text; parse safely
-    const text = await res.text();
-    let data: any = {};
-    try { data = JSON.parse(text); } catch {}
+      const text = await res.text();
+      let data: any = {};
+      try { data = JSON.parse(text); } catch {}
 
-    if (data && data.ok === false) {
-      throw new Error(data.error || 'Submission failed');
+      if (data && data.ok === false) throw new Error(data.error || 'Submission failed');
+
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      setTimeout(() => { setIsSuccess(false); onClose(); }, 3000);
+    } catch (err) {
+      console.error(err);
+      setIsSubmitting(false);
+      alert('Something went wrong. Please try again.');
     }
-
-    setIsSubmitting(false);
-    setIsSuccess(true);
-
-    setTimeout(() => {
-      setIsSuccess(false);
-      onClose();
-    }, 3000);
-  } catch (err) {
-    console.error(err);
-    setIsSubmitting(false);
-    alert("Something went wrong. Please try again.");
-  }
-};
-
-
+  };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
   };
 
+  const inputClass =
+    "w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition";
+
   return (
-    <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md 
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm
         ${animationState === 'entering' ? 'animate-backdrop-in' : animationState === 'exiting' ? 'animate-backdrop-out' : 'opacity-100'}`}
       onClick={handleBackdropClick}
     >
-      <div 
-        className={`relative w-full max-w-lg overflow-hidden bg-white rounded-[2.5rem] shadow-[0_48px_96px_-12px_rgba(0,0,0,0.9)] 
+      <div
+        className={`relative w-full max-w-lg overflow-hidden bg-white rounded-2xl shadow-2xl
           ${animationState === 'entering' ? 'animate-modal-in' : 'animate-modal-out'}`}
       >
-        <button 
+        <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 text-slate-300 hover:text-slate-500 hover:bg-slate-50 rounded-full transition-all z-10"
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all z-10"
           aria-label="Close modal"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         </button>
 
-        <div className="p-8 md:p-12">
+        <div className="p-8">
           {isSuccess ? (
-            <div className="flex flex-col items-center text-center py-12 space-y-6">
-              <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10">
-                <CheckCircle className="w-14 h-14" />
+            <div className="flex flex-col items-center text-center py-8 space-y-4">
+              <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-10 h-10" />
               </div>
-              <div>
-                <h2 className="text-3xl font-black text-slate-900 mb-2">Request Received</h2>
-                <p className="text-slate-500 font-medium leading-relaxed">
-                  We've successfully matched you with a Platinum Partner in your area. Check your email for next steps.
-                </p>
-              </div>
+              <h2 className="text-2xl font-display font-bold text-gray-900">Request Received!</h2>
+              <p className="text-gray-600">We&apos;ve matched you with a Platinum Partner. Check your email for next steps.</p>
             </div>
           ) : (
             <>
-              <div className="mb-8">
-                <div className="inline-block px-3 py-1 bg-sky-50 text-sky-600 text-[10px] font-black uppercase tracking-widest rounded-full mb-3 shadow-sm shadow-sky-100">
-                  Priority Referral
-                </div>
-                <h2 className="text-3xl font-black text-slate-900 leading-tight">Start Your Smile Journey</h2>
-                <p className="text-slate-500 mt-2 font-medium">
-                  Complete the form to get matched with vetted Invisalign specialists in your area.
-                </p>
+              <div className="mb-6">
+                <span className="inline-block px-3 py-1 bg-brand-50 text-brand-600 text-xs font-bold uppercase tracking-wider rounded-full mb-3">
+                  Free Matching Service
+                </span>
+                <h2 className="text-2xl font-display font-bold text-gray-900">Start Your Smile Journey</h2>
+                <p className="text-gray-600 text-sm mt-1">Complete the form to get matched with vetted Invisalign specialists.</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-1.5 group">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-sky-500 transition-colors">Full Name</label>
-                  <input 
-                    required 
-                    type="text" 
-                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-8 focus:ring-sky-400/5 outline-none transition-all placeholder:text-slate-300" 
-                    placeholder="E.g. Alexander Hamilton" 
-                  />
-                </div>
-                <div className="space-y-1.5 group">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-sky-500 transition-colors">Email Address</label>
-                  <input 
-                    required 
-                    type="email" 
-                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-8 focus:ring-sky-400/5 outline-none transition-all placeholder:text-slate-300" 
-                    placeholder="alex@example.com" 
-                  />
-                </div>
-                <div className="space-y-1.5 group">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1 group-focus-within:text-sky-500 transition-colors">Your City / Location</label>
-                  <input 
-                    required 
-                    type="text" 
-                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 text-slate-700 focus:border-sky-400 focus:bg-white focus:ring-8 focus:ring-sky-400/5 outline-none transition-all placeholder:text-slate-300" 
-                    placeholder="e.g. Manchester, UK" 
-                  />
-                </div>
-                
-                <button 
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <input required type="text" placeholder="Full name" className={inputClass} />
+                <input required type="email" placeholder="Email address" className={inputClass} />
+                <input required type="text" placeholder="Your city / location" className={inputClass} />
+
+                <button
+                  type="submit"
                   disabled={isSubmitting}
-                  type="submit" 
-                  className="w-full py-5 mt-4 bg-sky-500 hover:bg-sky-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-sky-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3 relative overflow-hidden group/btn"
+                  className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-semibold py-3 px-6 rounded-xl transition-colors text-sm mt-1"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></div>
-                  {isSubmitting ? (
-                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      Verify Availability
-                      <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                    </>
-                  )}
+                  {isSubmitting ? 'Sending…' : 'Verify Availability →'}
                 </button>
-                <div className="flex items-center justify-center gap-2 mt-6">
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    facilitator service • free initial consultation
-                  </p>
-                </div>
+
+                <p className="text-center text-xs text-gray-400 mt-1">
+                  Facilitator service · Free initial consultation
+                </p>
               </form>
             </>
           )}
@@ -187,6 +138,4 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       </div>
     </div>
   );
-};
-
-export default LeadFormModal;
+}
